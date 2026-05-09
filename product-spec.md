@@ -188,16 +188,18 @@ Vacation comes in two parts that the portal must surface separately on the balan
 
 Both buckets are spent together: the portal shows a combined "remaining" number in the UI but tracks them as two separate allocations internally for the carry-over rule below.
 
+**Consumption order** (load-bearing for the bucket display and for year-end leftover composition): every approved vacation day is debited in this fixed order — (1) **carry-over from previous year** first, (2) **statutory** of the current year, (3) **company bonus** last. This ordering means the bonus is the most exposed to remaining unused at year-end, which is what gives the over-accumulation penalty (§6.3) its teeth. The bucket-by-bucket "remaining" is visible to HR on the balances screen (§11.3); employees see the combined number plus the "bonus withheld" flag.
+
 ### 6.2 Other quotas
 
 | Quota | Default | Carry-over | Granularity |
 |---|---|---|---|
-| Sickday | 3 days | none, expires 31 December | full day |
+| Sickday | 3 days | none, expires 31 December (event date) | full day |
 | Paragraph | 7 days | none | half-day allowed |
 | OCR | 7 days | none | half-day allowed |
 | Special leave | per legal entitlement | configurable | half-day allowed |
 
-All defaults are configurable globally by HR and can be overridden per employee.
+All defaults are configurable globally by HR and can be overridden per employee. The **carry-over limit** in §6.3 is a global-only setting (no per-employee override). Quotas are bound to the **event date** of the entry, not the submission date — a sickday submitted on 2 January for a 31 December event counts against the previous year's quota.
 
 ### 6.3 Year rollover (annual job, runs at 00:05 on 1 January)
 
@@ -206,7 +208,7 @@ For each active employee:
 1. Compute the leftover vacation = unused statutory + unused company bonus from the previous year.
 2. Compute the carried-over amount and the bonus penalty:
    - **Slovak labour law forbids forfeiting statutory vacation.** No matter how many statutory days the employee carries over, they keep them all.
-   - If leftover ≤ carry-over limit (default 5, configurable) → carry the full leftover. The employee keeps their full company-bonus allocation in the new year.
+   - If leftover ≤ carry-over limit (global setting, default 5) → carry the full leftover. The employee keeps their full company-bonus allocation in the new year.
    - If leftover > carry-over limit → still carry the **full** leftover (statutory cannot be lost). **However**, the *company* bonus is the company's discretionary benefit, and the company policy is to withhold it from employees who over-accumulate: the company-bonus quota for the new year is set to 0.
 3. Allocate the new year's quotas: fresh statutory (per employee setting), fresh company bonus (0 if the bonus was withheld, otherwise default), fresh sickday/paragraph/OCR.
 4. Email the employee + HR a rollover summary: "Carried over: X days. Company bonus this year: Y days (withheld: yes/no)."
