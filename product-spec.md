@@ -163,9 +163,9 @@ Multiple worktime entries on the same day are allowed (split work blocks) as lon
 
 **Example — split day.** Tomáš logs 08:00-12:00 on project `ADM-1`, then 13:00-17:00 on `ADM-2`. Total 8h, two entries, no overlap → both saved.
 
-**Example — soft warning.** Tomáš logs a single block 06:00-15:00. The portal saves the entry but warns:
-- 06:00 is outside the working window 07:00-17:00 → "Outside working window".
-- The block is 9h continuous → "Single 8h+ worktime entry; consider splitting."
+**Example — soft warning.** Tomáš logs a single block 04:30-13:00. The portal saves the entry but warns:
+- 04:30–06:00 falls in the night-time range → S3 "Night-time work (between 22:00 and 06:00)".
+- The block is 8.5h continuous → S4 "Single 8h+ worktime entry; consider splitting."
 
 HR and the manager see both warnings on the report.
 
@@ -175,7 +175,7 @@ Project codes are *not mandatory* per team policy. A free-text comment is enough
 
 ### 5.3 Business trip
 
-Business-trip worktime is logged as a regular worktime entry with the Business-Trip flag turned on. The portal pre-fills the time window 07:00-17:00 for travel-only days (early-morning or late-evening travel logs as one full standard day to keep payroll consistent). No approval is required — the trip is visible to the manager on the team calendar. **A BT-flagged entry is still a worktime entry** and is subject to the same hard rules as any other worktime — H6 / H7 / H9 still apply (BT cannot coexist with an approved absence on the same day).
+Business-trip worktime is logged as a regular worktime entry with the Business-Trip flag turned on. The portal pre-fills the time window 08:00–16:30 (the standard working day per §12.2) for travel-only days (early-morning or late-evening travel logs as one full standard day to keep payroll consistent). No approval is required — the trip is visible to the manager on the team calendar. **A BT-flagged entry is still a worktime entry** and is subject to the same hard rules as any other worktime — H6 / H7 / H9 still apply (BT cannot coexist with an approved absence on the same day).
 
 ## 6. Quotas and balances
 
@@ -332,8 +332,7 @@ The portal validates *every* worktime and absence submission with a consistent r
 | ID | Rule | Plain-English explanation |
 |---|---|---|
 | S1 | 30-minute gap between half-day absence and same-day worktime. | If a morning Paragraph ends at 12:00, worktime should not start before 12:30. Vice versa for afternoon absences. |
-| S2 | Worktime is outside the working window 07:00-17:00. | Late or very-early hours are unusual; the portal flags but does not block. |
-| S3 | Night-time work (between 22:00 and 06:00). | Same as S2 but escalated wording. |
+| S3 | Night-time work (between 22:00 and 06:00). | Late-night / very-early hours are unusual; the portal flags but does not block. |
 | S4 | A single worktime entry exceeding 8 hours. | The system suggests splitting into morning + afternoon blocks. |
 | S5 | Quota approaching limit. | Informational warning when a submission would leave the employee at **2, 1, or 0 vacation days remaining** after submission, or at exactly 1 sickday remaining. (When the submission would push the balance below 0, H5 hard-blocks instead — S5 only fires when the submission still fits.) |
 | S6 | Worktime on a Slovak public holiday. | Allowed but flagged so HR can verify the entry is deliberate (per §12.1). Soft warning only. |
@@ -429,23 +428,16 @@ Slovak public holidays are imported once at setup time and cached in the portal.
 
 A worktime entry on a public holiday is allowed but produces a soft warning so HR can verify it was a deliberate choice.
 
-### 12.2 Standard working day and half-day time ranges
+### 12.2 Half-day time ranges
 
-The portal distinguishes two concepts that must not be conflated:
+A standard working day is **08:00–12:00 + 12:30–16:30 = 8h** with a 30-minute lunch break between 12:00 and 12:30. Half-day absence ranges are derived directly:
 
-- **Standard working day** — the canonical 8-hour schedule: **morning 08:00–12:00** + **afternoon 12:30–16:30** = 8h total, with a 30-minute lunch break between 12:00 and 12:30. This is what a "full day" of work looks like for payroll, overtime, and absence-coverage purposes.
-- **Half-day absence ranges** — derived directly from the standard working day:
-  - **Morning half-day: 08:00–12:00** (4 working hours covered by absence)
-  - **Afternoon half-day: 12:30–16:30** (4 working hours covered by absence)
-  The 30-minute lunch break (12:00–12:30) is what keeps the gap soft rule (S1, "30 min between half-day absence and same-day worktime") trivially satisfiable when the employee logs worktime in the standard slot.
+- **Morning half-day: 08:00–12:00** (4 working hours covered by absence)
+- **Afternoon half-day: 12:30–16:30** (4 working hours covered by absence)
 
-The user does not configure these ranges; the Admin can override globally if the company changes its working pattern.
+The 30-minute lunch break keeps S1 ("30 min gap between half-day absence and same-day worktime") trivially satisfiable when the employee logs worktime in the standard slot. The user does not configure these ranges; the Admin can override globally if the company changes its working pattern.
 
-### 12.3 Working window (flexibility range)
-
-The **working window** is a separate concept from the standard working day in §12.2. It defines the *acceptable* clock-time range for logging worktime without a soft warning: **07:00–17:00 by default** (i.e. one hour earlier than standard at the start, 30 minutes later than standard at the end). It exists so early-bird employees can log 07:00–08:00 work and late workers can log 16:30–17:00 work without warnings — flexibility around the standard schedule. Worktime outside this window does not block; it triggers S2 ("Outside working window") and, if before 06:00 or after 22:00, S3 ("Night-time work").
-
-Crisp summary: **standard working day = 8h schedule** (used for half-day absence boundaries and overtime detection); **working window = 10h flexibility range** (used for S2 / S3 soft-warning thresholds).
+Worktime logged between 22:00 and 06:00 triggers S3 (soft warning, night-time work). No other clock-time-window soft warnings apply.
 
 ## 13. Basic acceptance — what must work end-to-end on demo day
 
@@ -507,7 +499,7 @@ Tier placement (Basic vs Bonus) is now settled by DEC-004..006. Remaining defaul
 | O1 | What auth mechanism for the demo? | **Mock login (Basic per DEC-005).** Real auth is Bonus. |
 | O2 | "Same-team members" for sickday/PN notifications — same `team` only, or also project teammates? | Same `team` only. |
 | O3 | What happens when an Approved absence is later cancelled by the employee? | Withdrawal allowed up to one day before; quota refunded; audit entry written. After that day, HR-only. |
-| O4 | Half-day morning vs afternoon time ranges? | Morning 08:00–12:00, afternoon 12:30–16:30 (the standard working day per §12.2). The wider 07:00–17:00 is the *working window* (§12.3, flexibility range — used for S2 / S3 soft warnings, not for half-day boundaries). |
+| O4 | Half-day morning vs afternoon time ranges? | Morning 08:00–12:00, afternoon 12:30–16:30 (per §12.2). |
 | O5 | Should public holidays block worktime entries? | Soft warn only. |
 | O6 | First-year prorated entitlement for new hires? | Out of MVP — full year entitlement on join. |
 | O7 | Self-approving manager — escalate where? | Walk up org tree to first non-self ancestor; HR group if exhausted (DEC-003). |
