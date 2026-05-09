@@ -310,7 +310,7 @@ If the absence is still Pending when HR rejects the document, the portal moves i
 
 ## 9. Validation rules — full catalogue
 
-The portal validates *every* worktime and absence submission with a consistent rule set. Hard rules block submission with an inline error; soft rules show a yellow warning but allow saving.
+The portal validates *every* worktime and absence submission with a consistent rule set. Hard rules block one of the entry's transitions (most commonly *submission* — click Save → rule fires → save fails; H8 instead blocks the *Approval* transition without preventing submission as Pending). Soft rules show a yellow warning but allow the entry to save and progress.
 
 ### 9.1 Hard rules
 
@@ -325,7 +325,7 @@ The portal validates *every* worktime and absence submission with a consistent r
 | H7 | Overtime is forbidden during any absence. | Logical extension of H6. |
 | H8 | Documents are required to *finalise* Paragraph/OCR/Special. | The submission can be saved without a doc, but the absence cannot reach Approved until HR has validated a document. |
 | H9 | A full-day absence and worktime on the same day cannot coexist. | Stronger restatement of H6 in the case where the absence is already in the system. |
-| H10 | Two absences cannot occupy the same morning/afternoon slot. | If the morning is already paragraph, a vacation half-day for the same morning is blocked. The afternoon slot is independent. |
+| H10 | Two absences cannot occupy the same morning/afternoon slot. | If the morning is already Paragraph, a vacation half-day for the same morning is blocked; the afternoon slot is independent (a half-day afternoon vacation is allowed). This includes a **full-day** absence colliding with an existing half-day on either slot — a full-day claims both slots, so it conflicts with any pre-existing half-day. The employee must instead take a half-day for the free slot. |
 
 ### 9.2 Soft rules
 
@@ -335,13 +335,14 @@ The portal validates *every* worktime and absence submission with a consistent r
 | S2 | Worktime is outside the working window 07:00-17:00. | Late or very-early hours are unusual; the portal flags but does not block. |
 | S3 | Night-time work (between 22:00 and 06:00). | Same as S2 but escalated wording. |
 | S4 | A single worktime entry exceeding 8 hours. | The system suggests splitting into morning + afternoon blocks. |
-| S5 | Quota approaching limit. | Informational warning when a submission leaves only 0-2 days remaining for vacation, or exactly 1 sickday. |
+| S5 | Quota approaching limit. | Informational warning when a submission would leave the employee at **2, 1, or 0 vacation days remaining** after submission, or at exactly 1 sickday remaining. (When the submission would push the balance below 0, H5 hard-blocks instead — S5 only fires when the submission still fits.) |
 
 ### 9.3 Validation timing
 
 Validation runs:
 - when the user clicks Save on the form,
 - when the user edits an existing entry,
+- on every state transition of an entry (Pending → Approved, Approved → Cancelled, etc.) — quota or rule-config changes between submission and approval must be re-evaluated. Example: Anna submits a 5-day vacation when she has 19 remaining; before her manager approves, HR overrides her quota down to 3. The Approval transition re-validates and H5 hard-blocks the approve action.
 - as a dry-run inside the year-rollover preview (so HR can see what would happen before pressing the button).
 
 Soft warnings persist on the saved entry and are visible to the manager and to HR on every report and in the team calendar.
