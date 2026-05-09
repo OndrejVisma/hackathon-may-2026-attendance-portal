@@ -544,9 +544,11 @@ If a team has 4-7 people:
 - 1-2 — Absence + approvals + documents flows, end-to-end including the email loop.
 - 1 — Worktime + overtime + business trip + live form validation UX.
 - 1 — Reports + team calendar grid + balances charts + audit log screen.
-- 1 — Notifications dispatcher + in-portal notifications inbox + email-capture test harness, plus Bonus axes (Slack/ICS/calendar-sync) once Basic is green.
+- 1 — In-portal *My notifications* inbox (Basic) + dispatcher scaffolding for the email channel and Slack/ICS/calendar-sync axes (Bonus per §10 / §14) once Basic is green.
 
 If a team has 2-3 people: build vertical slices in the order Identity + mock auth → Worktime → Vacation flow → Sickday flow → Paragraph + documents → Reports. Aim to finish one slice every ~2 hours so the demo has at least four end-to-end flows.
+
+**If the team includes a Business Analyst**, route them to `ba/story-template.md` and `ba/slicing-guidance.md` (core bundle). They continuously refine the slice plan as build progresses, surface scope risks against the §13 acceptance set, and keep the team focused on the Basic tier before any Bonus drift.
 
 ---
 
