@@ -45,7 +45,8 @@ Build a self-contained web application that owns the whole attendance lifecycle:
 | Submit vacation/paragraph/OCR/special/overtime requests | yes | yes | yes | yes |
 | Upload own documents | yes | yes | yes | yes |
 | See own balance & history | yes | yes | yes | yes |
-| Approve/reject team requests | no | yes (own team **and** any descendant in the org tree per DEC-003) | yes (any) | no |
+| Approve/reject requests routed to me (direct reports) | no | yes | yes (any) | no |
+| Approve via skip-level chain (any descendant in the org tree) | no | yes | yes (any) | no |
 | See team calendar | own row only | yes (own team) | yes (any team) | yes |
 | Validate uploaded documents | no | no | yes | no |
 | Configure per-user quota overrides | no | no | yes | no |
@@ -406,6 +407,8 @@ Default working window is 07:00 - 17:00. Worktime outside this window does not b
 ## 13. Basic acceptance — what must work end-to-end on demo day
 
 The senior + AI-assisted baseline. **All of the following are required and must pass the Gherkin acceptance scenarios in `acceptance/` before any Bonus axis is counted (DEC-004 + DEC-007).**
+
+> **Note on role separation.** The role matrix in §3 is a *logical* separation (HR sees documents, Admin manages structure) — it is not a security boundary. Privilege-elevation prevention (e.g. preventing an Admin from granting themselves the HR role) is **out of MVP scope**. Don't lose hackathon time hardening it.
 
 1. Admin creates teams, assigns managers (sets `direct_manager_id` on each user, building the org tree), invites users with roles. UI is polished, validates input, shows feedback.
 2. **Mock login** — pick a user from the seeded list, no password. (Real auth — OIDC / magic-link / password+bcrypt — is **Bonus**, see §14, per DEC-005.)
