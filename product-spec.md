@@ -484,6 +484,7 @@ Off-limits until every Basic scenario passes. Judges enforce the gate.
 - **Two-factor auth** for HR and Admin roles.
 - **Rate limiting** — per-IP / per-user request throttles on submission, login, and document upload endpoints. Anti-abuse / anti-DoS posture.
 - **Audit-log tampering protection** — append-only table with a hash chain (each row's hash includes the previous row's hash). Detects retroactive edits of audit entries.
+- **UX polish axes** (§17.2) — live balance badge, side-panel calendar drill-in, keyboard shortcut, designed empty states, skeleton loaders, in-progress data preservation. Each axis can be picked up independently; collectively they sharpen demo quality without affecting correctness.
 
 ## 15. Out of scope (do not attempt in 12 h, even with AI)
 
@@ -511,19 +512,27 @@ Tier placement (Basic vs Bonus) is now settled by DEC-004..006. Remaining defaul
 
 Further open questions raised during spec authoring (PN/paternity workflow split, cancel-vs-reject race, H7 vs PN weekends, split-day export rows, audit-log scope of HR config edits, accident-PN documents, special-leave soft-cap wording, sickday consecutive-working-days definition) are tracked organiser-side in the project's `decisions.md` (DEC-010, 011, 014..018, 022, 023, 026). Their resolution may produce small clarifications in this spec; no behaviour-affecting change is expected before the event.
 
-## 17. UX guidance — what "polished" means for senior + AI teams
+## 17. UX guidance
+
+The bullets below are split into a **Basic UX baseline** (required for the §13 acceptance scenarios to feel genuinely usable) and **Polish Bonus axes** (counted only when Basic ≥ 90% per DEC-007; see also §14).
+
+### 17.1 Basic UX baseline (required)
 
 - A landing page / dashboard for each role: Employee sees their balances, today's entry, pending requests; Manager sees the approvals queue and the team calendar; HR sees the documents queue, monthly export button, and configuration screens.
 - An absence-submission form that picks the type first (because the rules differ per type), then surfaces the right fields (full vs half day, document upload if required).
-- An always-visible "remaining balance" badge on the absence form, recomputed live as the user changes dates.
 - Hard-rule errors render inline at the top of the form, in red, with the rule's plain-English message; soft warnings render in yellow and have a "Save anyway" button.
-- The team calendar is a grid, one row per team member, one column per day, scroll-free for the current month on a normal laptop. Click-through opens the day's detail in a side panel without leaving the page.
-- All emails sent by the portal also produce an in-portal record visible on a "My notifications" screen so the user can review history if their inbox lost an email.
-- A keyboard shortcut to log today's worktime in two keystrokes.
-- Empty states are designed (not blank panels) and tell the user what to do next.
-- Loading states are skeleton screens, not spinners.
+- The team calendar is a grid, one row per team member, one column per day, scroll-free for the current month on a normal laptop. (Side-panel drill-in is Polish Bonus — see §17.2.)
+- *My notifications* screen surfacing the in-portal notification feed (§10) so the user can review their event history.
 - Date fields default sensibly: today for "from", same as "from" for "to" until the user changes it.
-- Forms preserve in-progress data across accidental navigation.
+
+### 17.2 Polish Bonus axes (counted when Basic ≥ 90%)
+
+- **Live "remaining balance" badge** on the absence form, recomputed as the user changes dates (per §6.5 the recompute is straightforward — sum entries given the candidate dates).
+- **Calendar side-panel drill-in** — clicking a calendar cell opens the day's detail in a side panel without leaving the page.
+- **Keyboard shortcut to log today's worktime** in two keystrokes.
+- **Designed empty states** — not blank panels; tell the user what to do next.
+- **Skeleton screens for loading states** instead of spinners.
+- **In-progress data preservation across accidental navigation** — auto-save form work into the Draft state (§7) so it survives a closed tab or back-button.
 
 ## 18. Suggested team split for the hackathon
 
