@@ -487,7 +487,7 @@ Off-limits until every Basic scenario passes. Judges enforce the gate.
 
 ## 15. Out of scope (do not attempt in 12 h, even with AI)
 
-- Migration of *production* historical Tempo data with full data integrity.
+- Migration of *production* historical Tempo data with full data integrity. (The §14 Bonus axis "Tempo XLSX import" is a sandbox version — drop a file, see the diff, optionally commit. Out-of-scope here is the harder problem: real-data validation, dedup against existing entries, conflict resolution, and a rollback path.)
 - Multi-tenant SaaS architecture.
 - Multi-country support beyond Slovak rules.
 - Real Visma corporate SSO integration end-to-end including provisioning. (A generic OIDC flow against Google or Microsoft personal account is fair game and counts as Bonus per DEC-005.)
