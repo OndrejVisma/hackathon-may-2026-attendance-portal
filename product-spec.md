@@ -394,7 +394,9 @@ One row per person per day. Columns:
 
 ### 11.2 Team calendar (in-portal view)
 
-Rows are team members, columns are days of the picked month. Each cell shows:
+Rows are team members (everyone whose `team` field matches the selected team), columns are days of the picked month. Calendar is keyed off `team` membership, NOT the org tree (per glossary §2). A manager whose direct reports span multiple teams sees one team at a time and switches via a team picker.
+
+Each cell shows:
 - absence type (colour-coded), or
 - worktime hours total, or
 - "BT" badge if any business-trip entry, or
@@ -404,15 +406,15 @@ The manager can click a cell to drill in.
 
 ### 11.3 Balances report (per-user)
 
-For the picked year and user: every quota (statutory vacation, bonus vacation, sickday, paragraph, OCR) with allocated, used, carried-over, remaining, and a "bonus lost?" flag.
+For the picked year and user: every quota (statutory vacation, bonus vacation, sickday, paragraph, OCR) with allocated, used (per §6.5 — sum of Approved entries), reserved (sum of Pending), carried-over, remaining, and a "bonus lost?" flag. The "bonus lost?" flag is derived: it is `true` iff the picked year's `bonus_allocation == 0` while the previous year would have allocated the default — i.e. the over-accumulation penalty (§6.3) fired into this year. The balance screen MAY also surface the realised-vs-planned split (DEC-024 covers the UX).
 
 ### 11.4 Pending approvals queue
 
-Manager dashboard: every Pending request routed to them, sorted oldest first. HR dashboard: every Pending document.
+Manager dashboard default: every Pending request routed to them (`direct_manager_id` match), sorted oldest first. The skip-level filter from §7.2 ("I can approve via chain") is opt-in and broadens the queue to any Pending request from a descendant in the org tree (per DEC-003). HR dashboard: every Pending document.
 
 ### 11.5 Audit log
 
-HR/Admin only. Filter by user, date, action. Every state change of an absence, approval, document, or quota is recorded with actor, timestamp, before / after snapshot.
+HR/Admin only. Filter by user, date, **action** (Submit, Approve, Reject, Withdraw, Cancel, HR-Override, Document-Approve, Document-Reject, Quota-Override, Year-Rollover-Apply). Every state change of an absence, approval, document, or per-user quota override is recorded with actor, timestamp, before-snapshot, after-snapshot. (Whether HR/Admin global *configuration* edits — global quota defaults, public holiday list, half-day windows — are also audited is open: see DEC-018.)
 
 ### 11.6 Exceptions replay (Bonus tier — DEC-006)
 
