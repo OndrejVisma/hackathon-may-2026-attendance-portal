@@ -211,6 +211,8 @@ For each active employee:
 
 The "bonus withheld" flag is shown on the employee's balance screen with a tooltip explaining the policy, so people understand what happened and why.
 
+**Why Peter starts 2027 with more days than Anna — and why this is correct.** The visible 2027 balance (Peter 28 vs Anna 27) is *misleading at first glance*. The carry-over portion is just unused 2026 entitlement deferred into 2027 — not a fresh allocation. In *fresh lifetime entitlement*, Peter is **3 days down** because his 2027 bonus was zeroed (Anna: 23 + 23 = 46 fresh days across two years; Peter: 23 + 20 = 43; Mária: 23 + 23 = 46). The policy intent is to nudge employees to use vacation in-year — losing the bonus is the only available stick because Slovak labour law forbids forfeiting statutory days. The tooltip on the balance screen should explain this so employees understand the 28-vs-27 visual is not a reward for hoarding.
+
 ### 6.4 Approaching-limit warnings
 
 The portal raises a soft warning the moment a submission would leave the employee at or below 2 vacation days remaining, or at exactly 1 sickday remaining. This is informational — submission still proceeds.
@@ -225,7 +227,7 @@ Draft -> Pending -> Approved
                  -> Withdrawn (by employee while still Pending)
 ```
 
-Approved and Rejected are final. HR may override either of these states (e.g., correcting a mistaken approval) but every override must be visible in the audit log.
+Approved and Rejected are final. **Withdrawn is also terminal** — the request can no longer be approved or rejected, and any reserved quota is released back to the employee's balance. HR may override Approved or Rejected (e.g., correcting a mistaken approval) but every override must be visible in the audit log; HR does not override Withdrawn (the employee re-submits a new request instead).
 
 ### 7.1 Routing (DEC-003 — replaces source §7.1)
 
