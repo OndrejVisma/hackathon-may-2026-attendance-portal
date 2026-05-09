@@ -469,19 +469,21 @@ Off-limits until every Basic scenario passes. Judges enforce the gate.
 - **Real auth** — Google / Microsoft OIDC, magic-link email, or password + bcrypt (DEC-005).
 - **§11.6 Exceptions replay** — surface submissions now violating hard rules under current config; trigger mechanism is the team's call (DEC-006).
 - **Skip-level *policy* enforcement** — beyond DEC-003's permission, allow a configurable rule per team (e.g. vacation > 5 consecutive days requires both direct manager and skip-level).
-- **Email delivery channel** — fan out the in-portal notification records of §10 over SMTP. Single template per event; respect the dedup rule. (Foundational Bonus axis: most other notification-channel axes layer on top of a working email dispatcher.)
-- **Slack and/or Teams notification channels** alongside email. The dispatcher should be pluggable.
-- **Calendar synchronisation.** Push approved absences to a shared Google or Outlook team calendar. Read-only is fine.
-- **Public ICS feed** per team and per user, so people can subscribe in their own calendar app.
+- **Notification & calendar axes** — four related but distinct mechanisms; teams can pick any subset. Email is the foundational dispatcher, the others layer on it.
+  - **Email delivery channel** (foundational) — fan out the in-portal notification records of §10 over SMTP. Single template per event; respect the dedup rule. Most other notification axes assume a working email dispatcher.
+  - **Slack and/or Teams notification channels** — push the same events to chat. The dispatcher should be pluggable; reuse the email template registry.
+  - **Calendar synchronisation** — push approved absences to a shared Google or Outlook team calendar. Read-only is fine. Distinct from notifications: mutates a calendar resource rather than sending a message.
+  - **Public ICS feed** per team and per user — read-only feed consumers subscribe to from their own calendar app. Pull-model, not push.
 - **Mobile-friendly responsive UI.** The team calendar can degrade gracefully on phones; the absence form should work fully on mobile.
 - **PWA or installable shell**, so employees can launch the portal as an app on their phone home screen.
 - **Multi-language UI.** Slovak + English at minimum. The rule messages are user-visible and benefit most.
-- **Tempo XLSX import.** Drop a historical Tempo export onto the HR screen, the portal ingests it, classifies entries with the new rule engine, shows the diff before committing.
+- **Tempo XLSX import.** Drop a historical Tempo export onto the HR screen, the portal ingests it, classifies entries with the new rule engine, shows the diff before committing. The classify-against-current-rules step shares its replay engine with §11.6 / DEC-006 (Exceptions replay) — implement the engine once and reuse for both axes.
 - **HR bulk-edit of quotas** via uploaded CSV; preview diff before applying.
 - **Manager analytics:** team-level absence patterns (heat map of absences by week), average approval latency, soft-warning hot spots.
 - **Live websocket updates** so the manager's approvals queue updates without refresh when an employee submits.
 - **Two-factor auth** for HR and Admin roles.
-- **Rate limiting and basic audit-log tampering protection** (append-only table, hash chain).
+- **Rate limiting** — per-IP / per-user request throttles on submission, login, and document upload endpoints. Anti-abuse / anti-DoS posture.
+- **Audit-log tampering protection** — append-only table with a hash chain (each row's hash includes the previous row's hash). Detects retroactive edits of audit entries.
 
 ## 15. Out of scope (do not attempt in 12 h, even with AI)
 
