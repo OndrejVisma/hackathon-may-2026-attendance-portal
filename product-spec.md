@@ -349,20 +349,27 @@ Soft warnings persist on the saved entry and are visible to the manager and to H
 
 ## 10. Notifications
 
-Email is the only delivery channel for the MVP. Each event has a single template; the portal must not double-send (e.g. one email per recipient per event).
+Notifications are delivered on **two layers**:
 
-| Trigger | Recipients | What the email says |
+- **Basic — in-portal notification feed.** Every event in the table below MUST produce an in-portal notification record visible to each recipient on their *My notifications* screen (§13 #13). State-change visibility (manager queue auto-updates, employee balance refresh, etc.) is also Basic.
+- **Bonus — email channel.** Sending the same events as email is **Bonus** (see §14). Slack / Teams / ICS / calendar sync are Bonus axes layered on top of the same dispatcher.
+
+Each event has a single template; the portal must not double-send. **Each unique recipient address receives at most one notification per event, even when the recipient appears in multiple recipient groups** (e.g. an HR-role user who is also on the requester's team gets one record, not two).
+
+| Trigger | Recipients | What the message says |
 |---|---|---|
 | Vacation / Paragraph / OCR / Special / Overtime submitted | direct manager (or HR group if escalated) | "Approval needed: {employee} requests {type} for {dates}." + portal link |
-| Approval decision | the employee who submitted | "Your {type} request was {approved/rejected}." + reason if rejected |
+| Approval decision (Approve / Reject) | the employee who submitted | "Your {type} request was {approved/rejected}." + reason if rejected |
+| **Withdrawal** (employee withdraws Pending request) | direct manager (queue is now shorter) | "{employee} withdrew their {type} request for {dates}." |
+| **Cancellation** (employee cancels Approved future absence) | direct manager + HR group | "{employee} cancelled their {type} for {dates}." |
 | Sickday logged | direct manager + same-team members + HR group | "{employee} on sickday {date}." |
 | PN logged | direct manager + same-team members + HR group | "PN from {date_from}{ until {date_to}}." |
 | Document uploaded | HR group | "New document for {employee} {type} {dates}." |
-| Document validated | the document owner | "Document for {type} {dates} {approved/rejected}." + reason if rejected |
-| Quota approaching | the employee + HR | "Vacation balance: {n} days left." |
+| Document validated | the **employee whose absence carries the document** (regardless of who attached it — see §16 O8) | "Document for {type} {dates} {approved/rejected}." + reason if rejected |
+| Quota approaching (fired once at submission when S5 triggers; not periodic) | the employee + HR | "Vacation balance: {n} days left." |
 | Year rollover summary (1 January) | every employee + HR | "Carried over: {n} days. Bonus lost: yes/no." |
 
-The "same-team members" list is everyone whose `team` field equals the requester's team, excluding the requester. The HR group is the email distribution `hr-kosice@visma.com` plus every user holding the HR role.
+The "same-team members" list is everyone whose `team` field equals the requester's team, excluding the requester. The HR group is the email distribution `hr-kosice@visma.com` (used only when the email channel Bonus is implemented) **plus** every user holding the HR role (used for in-portal feed entries). The dedup rule above prevents double-delivery when both lists overlap.
 
 ## 11. Reports
 
@@ -440,16 +447,16 @@ The senior + AI-assisted baseline. **All of the following are required and must 
 1. Admin creates teams, assigns managers (sets `direct_manager_id` on each user, building the org tree), invites users with roles. UI is polished, validates input, shows feedback.
 2. **Mock login** — pick a user from the seeded list, no password. (Real auth — OIDC / magic-link / password+bcrypt — is **Bonus**, see §14, per DEC-005.)
 3. Employee logs daily worktime: project optional, BT toggle, overtime auto-detect on entries > 8 h. Inline live validation as the user types, not just on submit.
-4. Employee submits a vacation request → manager email → manager approves in portal → employee email → team calendar reflects the change → vacation balance decrements. The whole loop renders without page reloads.
-5. Employee logs a sickday: every hard rule is enforced (full-day only, ≤ 3/year, no consecutive sickdays, working day only) → manager + team + HR are emailed. The block message is human-friendly and suggests the right alternative (e.g. "use PN").
-6. Employee submits a Paragraph absence with a PDF → manager approves → HR validates the document. Reject path also works end-to-end: HR rejects, absence flips to Rejected, quota refunded, employee emailed, audit log updated.
+4. Employee submits a vacation request → manager's approvals queue updates without reload → manager approves → employee's *My notifications* feed shows the decision and balance refresh → team calendar reflects the change → vacation balance recomputes per §6.5. The whole loop renders without page reloads. **Email delivery of the same events is Bonus (§14).**
+5. Employee logs a sickday: every hard rule is enforced (full-day only, ≤ 3/year, no consecutive sickdays, working day only) → in-portal notification records produced for manager + team + HR. The block message is human-friendly and suggests the right alternative (e.g. "use PN"). **Email delivery is Bonus.**
+6. Employee submits a Paragraph absence with a PDF → manager approves → HR validates the document. Reject path also works end-to-end: HR rejects, absence transitions to Rejected (per §6.5 the entry stops contributing to `used`), in-portal notification produced for the employee, audit log updated. **Email delivery is Bonus.**
 7. Manager team calendar is a real grid: rows = team members, columns = days of current month, colour-coded cells, click-through to entry detail, pending-approval badges, BT badges. Switching months works.
 8. Manager approvals queue is live: appears immediately on submission, supports approve / reject with a reason, decision propagates to the employee instantly. **Skip-level approve via chain** (DEC-003) works — an ancestor in the org tree can approve a request routed to a subordinate manager.
 9. HR exports a monthly CSV and XLSX matching the column shape in §11.1. The XLSX has frozen header and column widths set sensibly.
-10. HR documents queue is real: list of pending docs with file preview (image inline, PDF in iframe), approve / reject + reason, instant feedback to the employee.
+10. HR documents queue is real: list of pending docs with file preview (image inline, PDF in iframe), approve / reject + reason. The employee's *My notifications* feed surfaces the validation outcome instantly (email is Bonus).
 11. Year-rollover dry-run on a fixture set produces correct outcomes for: leftover within limit (no bonus loss), leftover exceeding limit (bonus zeroed and excess lost), zero leftover. A button on the HR screen runs the rollover for real, with a confirmation modal and a side-by-side before/after preview.
 12. Audit log screen for HR / Admin: filterable by user, action, date. Each row shows actor, before-snapshot, after-snapshot.
-13. Notifications screen per user: every email the portal sent to me, in chronological order, with the rendered subject + body.
+13. *My notifications* screen per user: every notification record produced for me, in chronological order, with the rendered subject + body. (When the email channel Bonus is implemented, the same record corresponds 1:1 with the email actually sent.)
 14. Quota & balances screen per user: every quota type with allocated / used / carried-over / remaining / lost-bonus flag, plus an annual usage chart by month.
 
 ## 14. Bonus tier — only counted if Basic ≥ 90% (DEC-004 + DEC-007)
@@ -459,6 +466,7 @@ Off-limits until every Basic scenario passes. Judges enforce the gate.
 - **Real auth** — Google / Microsoft OIDC, magic-link email, or password + bcrypt (DEC-005).
 - **§11.6 Exceptions replay** — surface submissions now violating hard rules under current config; trigger mechanism is the team's call (DEC-006).
 - **Skip-level *policy* enforcement** — beyond DEC-003's permission, allow a configurable rule per team (e.g. vacation > 5 consecutive days requires both direct manager and skip-level).
+- **Email delivery channel** — fan out the in-portal notification records of §10 over SMTP. Single template per event; respect the dedup rule. (Foundational Bonus axis: most other notification-channel axes layer on top of a working email dispatcher.)
 - **Slack and/or Teams notification channels** alongside email. The dispatcher should be pluggable.
 - **Calendar synchronisation.** Push approved absences to a shared Google or Outlook team calendar. Read-only is fine.
 - **Public ICS feed** per team and per user, so people can subscribe in their own calendar app.
