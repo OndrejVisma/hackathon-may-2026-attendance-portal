@@ -157,7 +157,7 @@ A worktime entry has:
 - an optional project code (the portal must offer a default value of `GENERAL` so an employee can submit worktime without picking a project),
 - an optional free-text note,
 - an optional Business-Trip flag,
-- an Overtime flag the system sets automatically when the entry exceeds 8 hours.
+- an Overtime flag the system sets automatically when **the day's total worktime exceeds 8 hours** — including the cumulative case where no single entry is >8h but two or more entries combined exceed 8h. The flag attaches to the entry that pushes the day past the threshold; the day is then flagged as overtime and triggers the approval flow (§10, §7 state machine).
 
 Multiple worktime entries on the same day are allowed (split work blocks) as long as they do not overlap each other and do not overlap any approved absence on that day.
 
@@ -171,11 +171,11 @@ HR and the manager see both warnings on the report.
 
 ### 5.2 Project codes
 
-Project codes are *not mandatory* per team policy. A free-text comment is enough on a `GENERAL` entry. Teams pick how granular they want to be. The HR monthly report shows whatever was logged.
+Project codes are *not mandatory* per team policy. A free-text comment is enough on a `GENERAL` entry. Teams pick how granular they want to be. The HR monthly report shows whatever was logged. **`GENERAL` is reserved as the system default project code** — Admin / HR may not create a custom project with the same code.
 
 ### 5.3 Business trip
 
-Business-trip worktime is logged as a regular worktime entry with the Business-Trip flag turned on. The portal pre-fills the time window 07:00-17:00 for travel-only days (early-morning or late-evening travel logs as one full standard day to keep payroll consistent). No approval is required — the trip is visible to the manager on the team calendar.
+Business-trip worktime is logged as a regular worktime entry with the Business-Trip flag turned on. The portal pre-fills the time window 07:00-17:00 for travel-only days (early-morning or late-evening travel logs as one full standard day to keep payroll consistent). No approval is required — the trip is visible to the manager on the team calendar. **A BT-flagged entry is still a worktime entry** and is subject to the same hard rules as any other worktime — H6 / H7 / H9 still apply (BT cannot coexist with an approved absence on the same day).
 
 ## 6. Quotas and balances
 
