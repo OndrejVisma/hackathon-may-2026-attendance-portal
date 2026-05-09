@@ -70,13 +70,13 @@ Each absence type is its own product feature with its own rules. The portal must
 **Document:** none.
 
 **Example.** Anna has 23 vacation days for 2026 (20 statutory + 3 bonus) and has used 4. She submits 2026-07-13 → 2026-07-17 (5 working days). The portal:
-1. Counts the working days (5; the range is Mon-Fri so no weekend deduction).
+1. Counts the working days. **Working day = calendar day in range, minus Saturdays and Sundays, minus Slovak public holidays.** In this case 5 (range is Mon–Fri, no weekend or holiday).
 2. Confirms 5 ≤ 19 remaining.
 3. Records the request as Pending.
 4. Notifies her manager.
 5. The 5 days are *reserved* but not yet decremented from the balance — they decrement only when the manager approves.
 
-If the manager rejects, the reserved days return to the balance and Anna is notified by email.
+If the manager rejects, the reserved days return to the balance and Anna is notified by email. The same release happens on Withdraw or Cancel — see §7 for the full state machine and §7.3 for cancellation rules.
 
 ### 4.2 Sickday (company benefit)
 
@@ -237,6 +237,8 @@ Draft -> Pending -> Approved
 
 Approved and Rejected are final. **Withdrawn is also terminal** — the request can no longer be approved or rejected, and any reserved quota is released back to the employee's balance. HR may override Approved or Rejected (e.g., correcting a mistaken approval) but every override must be visible in the audit log; HR does not override Withdrawn (the employee re-submits a new request instead).
 
+**Sickday and PN bypass the Pending state.** The state machine above applies to manager-approved absence types (Vacation, Paragraph, OCR, Special leave, Overtime). **Sickday is auto-approved on submission** (subject to all hard rules in §9.1) — it has no Pending state and no manager involvement; HR may still override it post-hoc. **PN is self-declared** — the entry is recorded as Approved on submission with no manager involvement; HR attaches doctor's papers asynchronously. PN never decrements a quota (uncapped per §4.3).
+
 ### 7.1 Routing (DEC-003 — replaces source §7.1)
 
 - **Default approver:** the employee's `direct_manager_id`.
@@ -267,7 +269,7 @@ While the request is Pending, the employee can withdraw it from their own dashbo
 
 Paragraph, OCR and Special-leave requests require a document. Sickday, Vacation, PN do not (PN papers can be attached optionally by HR).
 
-The employee uploads the document while filling out the absence form — drag-and-drop or file picker, common image and PDF types accepted. The document is linked to the absence entry the moment the request is submitted.
+The employee uploads the document while filling out the absence form — drag-and-drop or file picker, common image and PDF types accepted. The document is linked to the absence entry the moment the request is submitted. **Documents may also be attached after submission** (before the absence reaches a final state) — useful when a doctor's note arrives after the employee has already logged the absence. H8 still applies: the absence cannot reach Approved until HR has validated a document.
 
 ### 8.2 HR validation
 
