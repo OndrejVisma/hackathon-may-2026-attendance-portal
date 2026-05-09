@@ -18,8 +18,8 @@ Build a self-contained web application that owns the whole attendance lifecycle:
 
 ## 2. Glossary
 
-- **Worktime entry** — A block of time on a given day during which the employee is working. Has a start time and an end time.
-- **Absence entry** — A day or range of days where the employee is not working: vacation, sickday, sick leave (PN), doctor visit (Paragraph), family-member care (OCR), special leave, paternity leave.
+- **Worktime entry** — A block of time on a *single calendar day* during which the employee is working. Has a start time and an end time. One record per day per block (a split day with morning + afternoon work creates two entries).
+- **Absence entry** — A *single record* covering one day or a range of consecutive days during which the employee is not working: vacation, sickday, sick leave (PN), doctor visit (Paragraph), family-member care (OCR), special leave, paternity leave. A 2-week PN is **one entry**, not 14 — opening it on day 5 shows the same record as day 1 or day 14. State transitions, comments, and audit events apply to the entry as a whole.
 - **Half-day absence** — An absence that covers only the morning or only the afternoon of a single day.
 - **Business trip (BT)** — Worktime spent away from the regular workplace.
 - **Overtime** — Worktime exceeding the standard 8-hour day, requiring approval.
@@ -76,7 +76,7 @@ Each absence type is its own product feature with its own rules. The portal must
 4. Notifies her manager.
 5. The 5 days are *reserved* but not yet decremented from the balance — they decrement only when the manager approves.
 
-If the manager rejects, the reserved days return to the balance and Anna is notified by email. The same release happens on Withdraw or Cancel — see §7 for the full state machine and §7.3 for cancellation rules.
+If the manager rejects, the entry transitions to Rejected and Anna is notified by email. Per §6.5, the entry stops contributing to `reserved` / `used` automatically; nothing is "refunded" because nothing was deducted as a counter — the computed remaining simply updates. Same model on Withdraw or Cancel — see §7 for the full state machine and §7.3 for cancellation rules.
 
 ### 4.2 Sickday (company benefit)
 
@@ -123,7 +123,7 @@ If the manager rejects, the reserved days return to the balance and Anna is noti
 
 **Example.** Janka has a 09:00 doctor's appointment on 2026-05-12. She submits a half-day Paragraph for the morning of 2026-05-12. She also wants to work in the afternoon. The portal recommends she log her worktime as starting no earlier than 12:30 (i.e. 30 minutes after the morning slot ends at 12:00). If she logs worktime starting at 12:15, she sees a yellow warning *"Half-day absence must be separated from working time by at least 30 minutes."* She can still save. Manager and HR see the warning on the entry.
 
-She uploads a photo of the confirmation. Manager approves the absence. HR opens the document, validates it as legible, marks it Approved → quota decrements by 0.5. If HR rejects the document (illegible, wrong period, etc.), the absence flips to Rejected, the quota returns, and Janka is emailed with the reason.
+She uploads a photo of the confirmation. Manager approves the absence. HR opens the document, validates it as legible, marks it Approved → the entry's state is now Approved and contributes 0.5 working-days to `used` per §6.5 (no counter mutation; the computed remaining drops accordingly). If HR rejects the document (illegible, wrong period, etc.), the entry transitions to Rejected; it stops contributing to `used` automatically; Janka is emailed with the reason. The rejected document file remains attached to the entry for audit trail.
 
 ### 4.5 OCR — accompanying a family member
 
@@ -227,6 +227,22 @@ The "bonus withheld" flag is shown on the employee's balance screen with a toolt
 
 The portal raises a soft warning the moment a submission would leave the employee at or below 2 vacation days remaining, or at exactly 1 sickday remaining. This is informational — submission still proceeds.
 
+### 6.5 Quota as a computed view (not a stored counter)
+
+The portal models quota balances as a **computed view over the absence-entry table**, never as a stored counter that gets debited and credited. Concretely:
+
+- `allocated` = the per-employee yearly entitlement (from the quota config table; updated only on year rollover or HR override).
+- `reserved` = sum of working-days across entries in state Pending for the current year (subject to the consumption order in §6.1).
+- `used` = sum of working-days across entries in state Approved for the current year (subject to the consumption order in §6.1).
+- `remaining` = `allocated − reserved − used`.
+
+**No "refund" or "decrement" action exists.** A state transition on an entry (Pending → Withdrawn, Approved → Rejected, Approved → Cancelled, Pending → Rejected) automatically changes which sum the entry contributes to; the computed `remaining` updates in lockstep. Audit log records the *state change*, not a quota-counter mutation.
+
+Consequences:
+- The cancel-vs-reject race (an absence cancelled by the employee at the same moment HR rejects its document) cannot double-refund — both transitions resolve to the same terminal state; the entry stops contributing to `used` exactly once.
+- Historical balance queries are reproducible by replaying entry states as of a target date; no separate counter to reconcile.
+- "Used" is naturally split into **realised** (entries whose date range has fully elapsed) vs **planned** (entries whose date range is today or in the future). The balance screen MAY surface this split (DEC-024 covers the UX).
+
 ## 7. Approval workflow
 
 Every planned absence and every overtime request goes through the same state machine:
@@ -261,11 +277,11 @@ A manager opens the approvals queue. **By default the queue shows requests route
 - any soft warnings on the entry,
 - a presence-of-document indicator if a document is attached. **The manager does not see, preview, or validate the document content** — that is HR's responsibility (§8.2).
 
-The manager picks Approve or Reject; reject requires a free-text reason. The decision triggers an email to the employee. On approve, the quota is decremented immediately.
+The manager picks Approve or Reject; reject requires a free-text reason. The decision triggers an email to the employee. On approve, the entry transitions Pending → Approved; per §6.5, this immediately moves its working-days from `reserved` to `used` in the computed quota view (no counter mutation).
 
 ### 7.3 Withdrawal and cancellation
 
-While the request is Pending, the employee can withdraw it from their own dashboard with one click. After approval, the employee can still *cancel* the absence (e.g. they no longer need the day off). Cancellation refunds the quota and writes an audit entry. Cancellation is allowed up to and including the day before the absence; cancelling on or after the absence date requires HR.
+While the request is Pending, the employee can withdraw it from their own dashboard with one click. After approval, the employee can still *cancel* the absence (e.g. they no longer need the day off). Cancellation transitions the entry to a Cancelled state; per §6.5 the entry then stops contributing to `used`, so the computed remaining updates without any counter mutation. The cancellation writes an audit entry. Cancellation is allowed up to and including the day before the absence; cancelling on or after the absence date requires HR.
 
 **Auto-approved types (Sickday) and self-declared types (PN) have no Pending state** — therefore Withdraw does not apply to them. Only Cancel applies, with the same day-before / HR-after rules.
 
@@ -273,9 +289,9 @@ While the request is Pending, the employee can withdraw it from their own dashbo
 
 ### 8.1 Upload
 
-Paragraph, OCR and Special-leave requests require a document. Sickday, Vacation, PN do not (PN papers can be attached optionally by HR).
+Paragraph, OCR and Special-leave requests require a document. Sickday and Vacation do not. **PN papers may be attached by either the employee or HR** — see §16 O8; both paths target the same PN entry.
 
-The employee uploads the document while filling out the absence form — drag-and-drop or file picker, common image and PDF types accepted. The document is linked to the absence entry the moment the request is submitted. **Documents may also be attached after submission** (before the absence reaches a final state) — useful when a doctor's note arrives after the employee has already logged the absence. H8 still applies: the absence cannot reach Approved until HR has validated a document.
+The employee uploads the document while filling out the absence form — drag-and-drop or file picker. **Accepted MIME types: `image/png`, `image/jpeg`, `application/pdf`. Per-file size cap: 10 MB.** The document is linked to the absence entry the moment the request is submitted. **Documents may also be attached after submission** (before the absence reaches a final state) — useful when a doctor's note arrives after the employee has already logged the absence. H8 still applies: the absence cannot reach Approved until HR has validated a document.
 
 ### 8.2 HR validation
 
@@ -283,12 +299,14 @@ HR has a dedicated "Pending documents" queue. Each entry shows the requester, ab
 
 - **Approve.** No further action needed; the absence proceeds through the normal manager-approval path.
 - **Reject** *after* the absence is already manager-approved. The portal:
-  1. Moves the absence to Rejected.
-  2. Refunds the quota.
-  3. Emails the employee with HR's reason.
-  4. Writes an audit entry.
+  1. Transitions the entry to Rejected. Per §6.5, the entry stops contributing to `used` automatically — no counter is "refunded".
+  2. Emails the employee with HR's reason.
+  3. Writes an audit entry capturing the state change (actor, before, after).
+  4. The rejected document file remains attached to the entry for audit. HR may still delete it via an audit-log override if needed.
 
-If the absence is still Pending when HR rejects the document, the portal flips it directly to Rejected without waiting for the manager.
+If the absence is still Pending when HR rejects the document, the portal moves it directly to Rejected without waiting for the manager.
+
+**Re-attempting after a document rejection.** Rejected is terminal (per §7). The employee submits a *fresh* absence request with a new document — the rejected entry stays in history.
 
 ## 9. Validation rules — full catalogue
 
