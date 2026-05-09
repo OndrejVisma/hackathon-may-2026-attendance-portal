@@ -237,6 +237,8 @@ Draft -> Pending -> Approved
                  -> Withdrawn (by employee while still Pending)
 ```
 
+**Draft** is a real persisted state — the employee has filled out (and saved) a request but has not yet submitted it for approval. Drafts are visible only to the requester, do not reserve quota, and do not notify anyone. The employee can edit a Draft freely or delete it. Submitting a Draft moves it to Pending (or directly to Approved for auto-approved types — see below).
+
 Approved and Rejected are final. **Withdrawn is also terminal** — the request can no longer be approved or rejected, and any reserved quota is released back to the employee's balance. HR may override Approved or Rejected (e.g., correcting a mistaken approval) but every override must be visible in the audit log; HR does not override Withdrawn (the employee re-submits a new request instead).
 
 **Sickday and PN bypass the Pending state.** The state machine above applies to manager-approved absence types (Vacation, Paragraph, OCR, Special leave, Overtime). **Sickday is auto-approved on submission** (subject to all hard rules in §9.1) — it has no Pending state and no manager involvement; HR may still override it post-hoc. **PN is self-declared** — the entry is recorded as Approved on submission with no manager involvement; HR attaches doctor's papers asynchronously. PN never decrements a quota (uncapped per §4.3).
@@ -252,18 +254,20 @@ Each user has exactly one `direct_manager_id` (nullable at top of tree). Fixture
 
 ### 7.2 Manager actions
 
-A manager opens the approvals queue and sees, for each pending request:
+A manager opens the approvals queue. **By default the queue shows requests routed to me** (direct reports); the **skip-level filter** ("I can approve via chain") is opt-in and exposes any pending request from a descendant in the org tree (per DEC-003 / §7.1). For each pending request the manager sees:
 - requester name + team,
 - absence type and dates,
 - remaining quota for the requester (so they can judge fairness),
 - any soft warnings on the entry,
-- any uploaded document (linked, if applicable; the actual validation is HR's responsibility, but the manager sees that something was attached).
+- a presence-of-document indicator if a document is attached. **The manager does not see, preview, or validate the document content** — that is HR's responsibility (§8.2).
 
 The manager picks Approve or Reject; reject requires a free-text reason. The decision triggers an email to the employee. On approve, the quota is decremented immediately.
 
 ### 7.3 Withdrawal and cancellation
 
 While the request is Pending, the employee can withdraw it from their own dashboard with one click. After approval, the employee can still *cancel* the absence (e.g. they no longer need the day off). Cancellation refunds the quota and writes an audit entry. Cancellation is allowed up to and including the day before the absence; cancelling on or after the absence date requires HR.
+
+**Auto-approved types (Sickday) and self-declared types (PN) have no Pending state** — therefore Withdraw does not apply to them. Only Cancel applies, with the same day-before / HR-after rules.
 
 ## 8. Documents
 
