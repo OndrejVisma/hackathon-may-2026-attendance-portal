@@ -509,6 +509,8 @@ Tier placement (Basic vs Bonus) is now settled by DEC-004..006. Remaining defaul
 | O7 | Self-approving manager — escalate where? | Walk up org tree to first non-self ancestor; HR group if exhausted (DEC-003). |
 | O8 | PN doctor's papers — uploaded by employee or HR? | Either is fine; the document attaches to the same PN entry. |
 
+Further open questions raised during spec authoring (PN/paternity workflow split, cancel-vs-reject race, H7 vs PN weekends, split-day export rows, audit-log scope of HR config edits, accident-PN documents, special-leave soft-cap wording, sickday consecutive-working-days definition) are tracked organiser-side in the project's `decisions.md` (DEC-010, 011, 014..018, 022, 023, 026). Their resolution may produce small clarifications in this spec; no behaviour-affecting change is expected before the event.
+
 ## 17. UX guidance — what "polished" means for senior + AI teams
 
 - A landing page / dashboard for each role: Employee sees their balances, today's entry, pending requests; Manager sees the approvals queue and the team calendar; HR sees the documents queue, monthly export button, and configuration screens.
