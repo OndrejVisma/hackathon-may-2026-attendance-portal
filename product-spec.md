@@ -443,6 +443,8 @@ Worktime logged between 22:00 and 06:00 triggers S3 (soft warning, night-time wo
 
 The senior + AI-assisted baseline. **All of the following are required and must pass the Gherkin acceptance scenarios in `acceptance/` before any Bonus axis is counted (DEC-004 + DEC-007).**
 
+**Suggested build order** (informative, not enforced): identity + mock auth (#1, #2) → worktime (#3) → first absence type — vacation full loop (#4) → sickday (#5) and Paragraph + document flow (#6) → manager calendar + approvals queue (#7, #8) → reports + balances (#9, #14) → year-rollover engine (#11) → audit log (#12) → notifications inbox (#13). Items #10 (HR documents queue) and #14 (balances) piggyback on the data model laid down by earlier items.
+
 > **Note on role separation.** The role matrix in §3 is a *logical* separation (HR sees documents, Admin manages structure) — it is not a security boundary. Privilege-elevation prevention (e.g. preventing an Admin from granting themselves the HR role) is **out of MVP scope**. Don't lose hackathon time hardening it.
 
 1. Admin creates teams, assigns managers (sets `direct_manager_id` on each user, building the org tree), invites users with roles. UI is polished, validates input, shows feedback.
@@ -458,7 +460,7 @@ The senior + AI-assisted baseline. **All of the following are required and must 
 11. Year-rollover dry-run on a fixture set produces correct outcomes for: leftover within limit (no bonus loss), leftover exceeding limit (bonus zeroed and excess lost), zero leftover. A button on the HR screen runs the rollover for real, with a confirmation modal and a side-by-side before/after preview.
 12. Audit log screen for HR / Admin: filterable by user, action, date. Each row shows actor, before-snapshot, after-snapshot.
 13. *My notifications* screen per user: every notification record produced for me, in chronological order, with the rendered subject + body. (When the email channel Bonus is implemented, the same record corresponds 1:1 with the email actually sent.)
-14. Quota & balances screen per user: every quota type with allocated / used / carried-over / remaining / lost-bonus flag, plus an annual usage chart by month.
+14. Quota & balances screen per user: every quota type with allocated / used / **reserved** (Pending entries per §6.5) / carried-over / remaining / lost-bonus flag, plus an annual usage chart by month.
 
 ## 14. Bonus tier — only counted if Basic ≥ 90% (DEC-004 + DEC-007)
 
