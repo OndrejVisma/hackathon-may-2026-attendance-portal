@@ -28,8 +28,13 @@ Build a self-contained web application that owns the whole attendance lifecycle:
 - **Approval** — A pending decision a manager (or HR) must make on a submitted request.
 - **Hard rule** — A rule that blocks submission. The user cannot save the entry until the violation is resolved.
 - **Soft rule** — A rule that warns the user but still saves the entry. Visible to manager and HR.
-- **Direct manager** — The single user listed on the employee's profile who is the default approver. Per DEC-003, any *ancestor* in the org tree may also approve (skip-level allowed).
-- **HR group** — The HR-role users collectively. Receive document validation requests and act as fallback approvers.
+- **Direct manager** — The single user listed on the employee's `direct_manager_id` field. Default approver for routed requests. See §7.1 for full routing semantics including skip-level.
+- **Skip-level approval** — Any *ancestor* of the requester in the org tree (manager's manager, etc.) may also approve a request routed to a subordinate manager. See §7.1.
+- **HR group** — The HR-role users collectively. Receive document validation requests and act as fallback approvers when no direct manager is set or when a self-approval guard exhausts the chain.
+- **Reserved (quota slot)** — A quota amount held against an employee's balance while a request is in Pending. The slot is *visible as deducted* on the balance screen but is not yet a final decrement; if the request is Withdrawn or Rejected, the slot is released back. The decrement becomes final only on Approval.
+- **Audit log** — Immutable record of every state change of an absence, approval, document, or quota. Each entry stores actor, timestamp, before-snapshot, after-snapshot. See §11.5.
+- **Team** — A grouping of users assigned by Admin. The team-calendar view (§11.2) and same-team notification list (§10) key off this field. Independent of the org tree (a team's members may report to different managers).
+- **Project code** — An optional tag on a worktime entry (`GENERAL` is the default). Free-form per company policy; the export (§11.1) carries whatever the user logged.
 
 ## 3. Personas, roles and permissions
 
