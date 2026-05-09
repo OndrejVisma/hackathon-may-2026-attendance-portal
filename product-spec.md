@@ -12,7 +12,9 @@
 
 Today the company tracks attendance by emailing monthly Tempo XLSX exports to a back-office robot that flags rule violations after the fact. Employees, managers and HR have no real-time view, no approval flow, no document handling and no quota enforcement at the moment of submission.
 
-Build a self-contained web application that owns the whole attendance lifecycle: daily worktime, planned and unplanned absences, document confirmations, manager approvals, quotas and reports. The portal replaces Tempo for absence and worktime tracking. There is no Tempo integration to maintain.
+Build a self-contained web application that owns the whole attendance lifecycle: daily worktime, planned and unplanned absences, document confirmations, manager approvals, quotas and reports. The portal **replaces Tempo** as the capture tool — there is no Tempo integration to maintain.
+
+**Important — downstream accounting export.** The portal's monthly export still feeds an **external accounting system** that processes payroll, payouts, and other compliance-relevant outputs. The export format (CSV column shape and `flag` codes in §11.1) is fixed by the accounting system's contract — teams must treat it as an external interface, not as something they can redesign. Tempo's replacement is for *capture and lifecycle*; the *export contract to accounting* survives unchanged. Historical Tempo data ingest (different concern) is a separate Bonus axis in §14.
 
 ## 2. Glossary
 
@@ -337,7 +339,7 @@ One row per person per day. Columns:
 
 `date | full_name | team | flag | hours | project_code | comment | errors`
 
-`flag` uses short codes that mirror what HR's existing downstream pipeline expects:
+`flag` uses the short codes mandated by the **external accounting system** that consumes this export for payroll and compliance purposes (see §1). The codes are fixed by that contract — teams must not invent or rename them:
 
 - `PD` — worktime (Pracovný deň)
 - `PC` — business trip (Pracovná cesta)
