@@ -53,7 +53,7 @@ If the eval-runner sees you started a Bonus axis with Basic incomplete, you forf
 | [`dev-extras/integration/fixtures/`](dev-extras/integration/fixtures/) *(TBD)* | dev + QA | Users, teams, holidays, quotas, in-flight absences, sample docs. |
 | [`dev-extras/nfr/performance.yaml`](dev-extras/nfr/performance.yaml) *(TBD)* | dev | Latency + calendar grid render targets. |
 | [`dev-extras/nfr/time-budget.yaml`](dev-extras/nfr/time-budget.yaml) *(TBD)* | dev | 12h cap + per-phase guidance. |
-| [`dev-extras/frontend/ux-baseline.md`](dev-extras/frontend/ux-baseline.md) *(TBD)* | frontend dev | UX minimum — extracted from spec §17. |
+| [`dev-extras/frontend/fe-technical-refinement.md`](dev-extras/frontend/fe-technical-refinement.md) | frontend dev | FE technical refinement — 38 sections framework-agnostic (responsive, PWA, a11y WCAG 2.2 AA, theming, i18n, real-time, auth, file upload, perf budgets, design system, state, forms, security, testing, build/eval-runner, code architecture, DI, TZ handling, API contract, etc.) with Basic / Bonus tier mapping per DEC-004. |
 | [`dev-extras/role-quickstarts/`](dev-extras/role-quickstarts/) *(TBD)* | dev / QA | Per-role 5-min entry: backend dev/QA, frontend dev/QA. |
 
 ## Role start map
@@ -64,7 +64,7 @@ Don't read everything. Pick your role, follow the quickstart.
 |---|---|---|---|
 | **Backend dev** | core + dev-extras | [`dev-extras/role-quickstarts/backend-dev.md`](dev-extras/role-quickstarts/backend-dev.md) | `dev-extras/domain/entities.md` → `acceptance/*.feature` → spec §6, §7, §9 |
 | **Backend QA / SDET** | core + dev-extras | [`dev-extras/role-quickstarts/backend-qa.md`](dev-extras/role-quickstarts/backend-qa.md) | `acceptance/*.feature` → `dev-extras/integration/fixtures/` |
-| **Frontend dev** | core + dev-extras | [`dev-extras/role-quickstarts/frontend-dev.md`](dev-extras/role-quickstarts/frontend-dev.md) | `dev-extras/frontend/ux-baseline.md` → spec §17 |
+| **Frontend dev** | core + dev-extras | [`dev-extras/role-quickstarts/frontend-dev.md`](dev-extras/role-quickstarts/frontend-dev.md) *(TBD)* | `dev-extras/frontend/fe-technical-refinement.md` → spec §17 |
 | **Frontend QA** | core + dev-extras | [`dev-extras/role-quickstarts/frontend-qa.md`](dev-extras/role-quickstarts/frontend-qa.md) | `acceptance/employee.feature` + `manager.feature` |
 | **Business Analyst** | core only | [`role-quickstarts/business-analyst.md`](role-quickstarts/business-analyst.md) | `ba/story-template.md` + `ba/slicing-guidance.md` |
 | **Solo or 2-person team** | core + dev-extras | [`role-quickstarts/solo-or-multi.md`](role-quickstarts/solo-or-multi.md) | vertical slice plan |

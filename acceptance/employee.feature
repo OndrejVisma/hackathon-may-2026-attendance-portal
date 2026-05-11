@@ -2,6 +2,13 @@
 # Tags: @basic = Basic-tier, must pass before any Bonus axis is counted (DEC-004 + DEC-007).
 #       @bonus = Bonus tier; counted only if Basic >= 90% pass.
 # Pre-conditions assume the seeded fixture set under integration/fixtures/.
+#
+# Notification reading guide (per product-spec.md §10):
+#   In @basic scenarios, "receives an X notification" asserts the in-portal
+#   notification record visible on the recipient's "My notifications" screen.
+#   The literal email is asserted only by @bonus @email-channel scenarios at
+#   the bottom of this file; eval-runs without the email-channel Bonus pass
+#   @basic by inspecting the notification record, not an SMTP capture.
 
 Feature: Employee — worktime, absences, balances, notifications
 
@@ -52,7 +59,7 @@ Feature: Employee — worktime, absences, balances, notifications
     When I submit a Vacation request from "2026-07-13" to "2026-07-17"
     Then the request status is "Pending"
     And my balance shows "19 remaining" with "5 reserved"
-    And my direct manager receives an "Approval needed" email
+    And my direct manager receives an "Approval needed" notification
 
   @basic @vacation @hard
   Scenario: Vacation blocked when remaining < requested (H5)
@@ -99,7 +106,7 @@ Feature: Employee — worktime, absences, balances, notifications
     And the day before is NOT a sickday
     When I submit a Sickday for "2026-05-06"
     Then the entry is saved with status "Approved"
-    And my direct manager, my team members and the HR group receive a sickday email
+    And my direct manager, my team members and the HR group receive a sickday notification
 
   @basic @sickday @hard
   Scenario: Half-day option is hidden for Sickday (H2)
@@ -133,7 +140,7 @@ Feature: Employee — worktime, absences, balances, notifications
     When I submit a half-day Paragraph for the morning of "2026-05-12" with the seeded PDF "doctor.pdf"
     Then the request status is "Pending"
     And the document is attached to the absence
-    And the HR group receives a "New document" email
+    And the HR group receives a "New document" notification
 
   @basic @paragraph @soft
   Scenario: 30-minute gap soft warning S1 between half-day Paragraph and same-day worktime
@@ -156,13 +163,13 @@ Feature: Employee — worktime, absences, balances, notifications
     When I log PN from "2026-04-20" to "2026-04-30"
     Then the entry is saved with status "Logged"
     And no quota is decremented
-    And my direct manager, my same-team members and the HR group receive a PN email
+    And my direct manager, my same-team members and the HR group receive a PN notification
 
   # ---- Notifications inbox ----
 
   @basic @notifications
-  Scenario: My notifications screen lists every email sent to me
-    Given the system has sent me an "Approval decision" email and a "Document validated" email today
+  Scenario: My notifications screen lists every notification I received
+    Given the system has produced an "Approval decision" notification and a "Document validated" notification for me today
     When I open "My notifications"
     Then I see both entries in chronological order with rendered subject and body
 
@@ -194,3 +201,30 @@ Feature: Employee — worktime, absences, balances, notifications
     When I open the absence form on a 375x667 viewport
     Then every form field is reachable without horizontal scroll
     And the submit button is tappable above the keyboard
+
+  # ---- Bonus — Email channel mirror (counted only if email-channel Bonus is delivered) ----
+
+  @bonus @email-channel
+  Scenario: Vacation submission also delivers an "Approval needed" email when the email Bonus is implemented
+    Given the email-channel Bonus is declared in eval-meta.yaml
+    When I submit a Vacation request from "2026-07-13" to "2026-07-17"
+    Then the SMTP capture contains an "Approval needed" email addressed to my direct manager
+
+  @bonus @email-channel
+  Scenario: Sickday submission also delivers a sickday email to manager, team, and HR
+    Given the email-channel Bonus is declared in eval-meta.yaml
+    And today is a working day with no consecutive sickday
+    When I submit a Sickday for today
+    Then the SMTP capture contains a sickday email addressed to my direct manager, my team members and the HR group
+
+  @bonus @email-channel
+  Scenario: Document upload also delivers a "New document" email to HR
+    Given the email-channel Bonus is declared in eval-meta.yaml
+    When I submit a half-day Paragraph with an attached PDF
+    Then the SMTP capture contains a "New document" email addressed to the HR group
+
+  @bonus @email-channel
+  Scenario: PN logging also delivers a PN email to manager, team, and HR
+    Given the email-channel Bonus is declared in eval-meta.yaml
+    When I log PN from "2026-04-20" to "2026-04-30"
+    Then the SMTP capture contains a PN email addressed to my direct manager, my same-team members and the HR group

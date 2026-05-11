@@ -1,5 +1,11 @@
 # Manager-facing scenarios. Actor = a user with the Manager role plus an underlying Employee role.
 # Tags: @basic / @bonus per DEC-004.
+#
+# Notification reading guide (per product-spec.md §10):
+#   In @basic scenarios, "receives an X notification" asserts the in-portal
+#   notification record on the recipient's "My notifications" screen. The
+#   literal email is asserted only by @bonus @email-channel scenarios at the
+#   bottom of this file.
 
 Feature: Manager — approvals queue, team calendar, skip-level chain (DEC-003)
 
@@ -27,7 +33,7 @@ Feature: Manager — approvals queue, team calendar, skip-level chain (DEC-003)
     Given Anna has a Pending Vacation from "2026-07-13" to "2026-07-17"
     When I Approve the request
     Then Anna's vacation balance decrements by "5" immediately
-    And Anna receives an "Approved" email
+    And Anna receives an "Approved" notification
     And the team calendar reflects the absence on "2026-07-13..2026-07-17"
 
   @basic @approvals
@@ -37,7 +43,7 @@ Feature: Manager — approvals queue, team calendar, skip-level chain (DEC-003)
     Then the action is blocked with an inline validation error
     When I Reject with reason "Coverage conflict — please re-pick"
     Then the request status is "Rejected"
-    And Anna receives a "Rejected" email containing the reason
+    And Anna receives a "Rejected" notification containing the reason
 
   @basic @approvals
   Scenario: Approvals queue updates without page reload when an employee submits
@@ -120,3 +126,19 @@ Feature: Manager — approvals queue, team calendar, skip-level chain (DEC-003)
     Given my approvals queue is open with a websocket connection established
     When employee "Peter" submits a request
     Then the queue receives a websocket message and renders the new row within 1s
+
+  # ---- Bonus — Email channel mirror ----
+
+  @bonus @email-channel
+  Scenario: Approve decision also delivers an "Approved" email to the requester
+    Given the email-channel Bonus is declared in eval-meta.yaml
+    And Anna has a Pending Vacation from "2026-07-13" to "2026-07-17"
+    When I Approve the request
+    Then the SMTP capture contains an "Approved" email addressed to Anna
+
+  @bonus @email-channel
+  Scenario: Reject decision also delivers a "Rejected" email containing the reason
+    Given the email-channel Bonus is declared in eval-meta.yaml
+    And Anna has a Pending Vacation from "2026-07-13" to "2026-07-17"
+    When I Reject with reason "Coverage conflict — please re-pick"
+    Then the SMTP capture contains a "Rejected" email addressed to Anna containing the reason

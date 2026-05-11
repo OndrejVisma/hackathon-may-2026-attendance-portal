@@ -14,7 +14,7 @@ Today the company tracks attendance by emailing monthly Tempo XLSX exports to a 
 
 Build a self-contained web application that owns the whole attendance lifecycle: daily worktime, planned and unplanned absences, document confirmations, manager approvals, quotas and reports. The portal **replaces Tempo** as the capture tool — there is no Tempo integration to maintain.
 
-**Important — downstream accounting export.** The portal's monthly export still feeds an **external accounting system** that processes payroll, payouts, and other compliance-relevant outputs. The export format (CSV column shape and `flag` codes in §11.1) is fixed by the accounting system's contract — teams must treat it as an external interface, not as something they can redesign. Tempo's replacement is for *capture and lifecycle*; the *export contract to accounting* survives unchanged. Historical Tempo data ingest (different concern) is a separate Bonus axis in §14.
+**Important — downstream accounting export.** The portal's monthly export still feeds an **external accounting system** that processes payroll, payouts, and other compliance-relevant outputs. The export format (the two-sheet XLSX layout and activity-label catalogue in §11.1, modelled on the reference fixture `Attendence_example_report.xlsx`) is fixed by the accounting system's contract — teams must treat it as an external interface, not as something they can redesign. Tempo's replacement is for *capture and lifecycle*; the *export contract to accounting* survives unchanged. Historical Tempo data ingest (different concern) is a separate Bonus axis in §14.
 
 ## 2. Glossary
 
@@ -332,6 +332,7 @@ The portal validates *every* worktime and absence submission with a consistent r
 | ID | Rule | Plain-English explanation |
 |---|---|---|
 | S1 | 30-minute gap between half-day absence and same-day worktime. | If a morning Paragraph ends at 12:00, worktime should not start before 12:30. Vice versa for afternoon absences. |
+| S2 | Worktime outside the working window. | Worktime entries with a start before the configured day-start (default 08:00) or an end after the configured day-end (default 16:30) are flagged. Allowed but unusual. The default window can be overridden globally by Admin (§12.2). |
 | S3 | Night-time work (between 22:00 and 06:00). | Late-night / very-early hours are unusual; the portal flags but does not block. |
 | S4 | A single worktime entry exceeding 8 hours. | The system suggests splitting into morning + afternoon blocks. |
 | S5 | Quota approaching limit. | Informational warning when a submission would leave the employee at **2, 1, or 0 vacation days remaining** after submission, or at exactly 1 sickday remaining. (When the submission would push the balance below 0, H5 hard-blocks instead — S5 only fires when the submission still fits.) |
@@ -356,6 +357,8 @@ Notifications are delivered on **two layers**:
 
 Each event has a single template; the portal must not double-send. **Each unique recipient address receives at most one notification per event, even when the recipient appears in multiple recipient groups** (e.g. an HR-role user who is also on the requester's team gets one record, not two).
 
+> **Gherkin reading guide.** Where the `acceptance/` Gherkin scenarios assert that a recipient "receives an X email", the assertion is Basic only insofar as the **in-portal notification record** is produced and visible on the recipient's *My notifications* screen. The literal email is delivered only when the email-channel Bonus (§14) is implemented; eval-runs without that Bonus pass the same scenario by inspecting the notification record rather than an SMTP capture. Teams should treat "email" in Basic Gherkin as shorthand for "notification event of that kind"; teams implementing the email Bonus additionally satisfy a corresponding `@bonus @email-channel` scenario that asserts an SMTP capture exists for the same event.
+
 | Trigger | Recipients | What the message says |
 |---|---|---|
 | Vacation / Paragraph / OCR / Special / Overtime submitted | direct manager (or HR group if escalated) | "Approval needed: {employee} requests {type} for {dates}." + portal link |
@@ -373,24 +376,98 @@ The "same-team members" list is everyone whose `team` field equals the requester
 
 ## 11. Reports
 
-### 11.1 Monthly HR export (CSV / XLSX)
+### 11.1 Monthly HR export (XLSX)
 
-One row per person per day. Columns:
+The monthly export must match the **external accounting system's** layout byte-for-byte. The reference fixture file is `Attendence_example_report.xlsx` (in the parent Hackatlon folder; teams may copy it into their own repo). The export is a single Excel workbook with **two sheets**, both bilingual per the user's selected language at download time. Slovak is the default; the download dialog offers a language override per export.
 
-`date | full_name | team | flag | hours | project_code | comment | errors`
+#### Sheet 1: Attendance (sheet name localised — Slovak: `Dochádzka`, English: `Attendance`)
 
-`flag` uses the short codes mandated by the **external accounting system** that consumes this export for payroll and compliance purposes (see §1). The codes are fixed by that contract — teams must not invent or rename them:
+Wide matrix layout. One row per **half-day** (morning + afternoon) for the entire calendar month, including weekends and holidays. One **block of three columns per employee**. Employees ordered alphabetically by last name.
 
-- `PD` — worktime (Pracovný deň)
-- `PC` — business trip (Pracovná cesta)
-- `D` — vacation (Dovolenka)
-- `SKD` — sickday
-- `PN` — sick leave / paternity leave (DEC-010 deferred — may split to `PN` vs `OTC` later)
-- `NL` — Paragraph (Návšteva lekára)
-- `OČR` — OCR
-- `SD` — special leave (Špeciálne dni)
+| Column index | Header (localised) | Meaning |
+|---|---|---|
+| 1 | Day | Day, formatted `dd.MM.yyyy {morning-label}` or `dd.MM.yyyy {afternoon-label}`. Two rows per calendar day. SK: `Deň` / `Doobedu` / `Poobede`. EN: `Day` / `Morning` / `Afternoon`. |
+| 2, 5, 8, … | `{firstName} {lastName}` | Activity label for that employee for that half-day. Employee names themselves are never translated. |
+| 3, 6, 9, … | Time | Time range as a string, e.g. `08:00 - 12:00`. SK header: `Čas`. EN header: `Time`. Weekends and absences without a specific time use the conventional `08:00 - 12:00` / `12:30 - 16:30` split. |
+| 4, 7, 10, … | Hours | Hours as a decimal number, e.g. `4.0`. `0.0` for weekend rows. SK header: `Hodiny`. EN header: `Hours`. |
 
-`errors` is a comma-separated list of any soft warnings still present on the day's entries (or a leftover hard error if HR is replaying historical data with newer rules). DEC-011 deferred — escaping convention for inner commas open (RFC 4180 quoting recommended placeholder).
+**Activity-label catalogue** (column 2 / 5 / 8 …):
+
+| Source data | Slovak | English |
+|---|---|---|
+| Worktime entry on a working day | `Práca` | `Work` |
+| Worktime entry with BT flag | `Pracovná cesta` | `Business trip` |
+| Public holiday | `Sviatok` | `Holiday` |
+| Weekend — activity column | `V` | `W` |
+| Weekend — time column (literal text instead of a range) | `Víkend` | `Weekend` |
+| Approved vacation absence (statutory or bonus, indistinguishable in this sheet) | `Dovolenka` | `Vacation` |
+| Approved sickday | `Sickday` | `Sickday` |
+| Approved PN / paternity (DEC-010 deferred — may split to `PN` vs `OTC` later) | `PN` | `Sick leave` |
+| Approved Paragraph / doctor visit | `Návšteva lekára` | `Doctor visit` |
+| Approved OCR / family-member care | `Sprevádzanie člena rodiny` | `Family care` |
+| Approved special leave | `Špeciálne voľno` | `Special leave` |
+
+A half-day absence emits the absence label on its half and the work label (or weekend / holiday label) on the other half. Example: morning Paragraph + afternoon work on 2026-04-08 in Slovak renders as `08.04.2026 Doobedu | Návšteva lekára | 08:00 - 12:00 | 4.0` then `08.04.2026 Poobede | Práca | 12:30 - 16:30 | 4.0`.
+
+**Worked example (excerpt — 3 employees on 2026-04-01, Slovak export):**
+
+```
+Deň                | Jožko Mrkvička | Čas           | Hodiny | Linda Robotová | Čas           | Hodiny | Dunčo Ušatý | Čas           | Hodiny
+01.04.2026 Doobedu | Práca          | 08:00 - 12:00 | 4.0    | Práca          | 07:00 - 11:00 | 4.0    | Práca       | 08:30 - 12:30 | 4.0
+01.04.2026 Poobede | Práca          | 12:30 - 16:30 | 4.0    | Práca          | 11:30 - 15:30 | 4.0    | Práca       | 13:00 - 17:00 | 4.0
+```
+
+#### Sheet 2: Overtime (sheet name localised — Slovak: `Nadčas`, English: `Overtime`)
+
+A separate sheet that lists only approved overtime entries. One block per employee who has at least one overtime entry that month. Employees with no overtime that month are omitted.
+
+Each block:
+
+| Row | Col 1 | Col 2 | Col 3 | Col 4 |
+|---|---|---|---|---|
+| Header row | `{firstName} {lastName}` | Day header | Time header | Hours header |
+| Data row(s) | Overtime label | date `dd.MM.yyyy` | time range `HH:MM - HH:MM` | hours decimal |
+| Blank row | — | — | — | — | (separator between employees) |
+
+**Overtime catalogue labels:**
+
+| Source data | Slovak | English |
+|---|---|---|
+| Sheet name | `Nadčas` | `Overtime` |
+| Data-row activity label | `Nadčas` | `Overtime` |
+| Day header | `Deň` | `Day` |
+| Time header | `Čas` | `Time` |
+| Hours header | `Hodiny` | `Hours` |
+
+**Example block (Slovak):**
+
+```
+Linda Robotová  | Deň          | Čas             | Hodiny
+Nadčas          | 30.04.2026   | 16:30 - 20:30   | 4.0
+                |              |                 |
+Dunčo Ušatý     | Deň          | Čas             | Hodiny
+Nadčas          | 24.04.2026   | 17:00 - 21:00   | 4.0
+Nadčas          | 25.04.2026   | 08:00 - 14:00   | 6.0
+```
+
+#### Generation rules
+
+- Download allowed for HR + Admin only.
+- Date range is a single full calendar month picked by HR.
+- Export language defaults to the user's portal preference; the download dialog allows a per-export override.
+- Half-day labels follow the locale catalogue: SK `Doobedu` / `Poobede`, EN `Morning` / `Afternoon`. The data segment (`dd.MM.yyyy`) is locale-independent.
+- Weekend rows always render the localised weekend marker (SK `V` + `Víkend`, EN `W` + `Weekend`) regardless of any logged worktime; weekend-logged worktime is preserved in the audit log and in the Bonus Exceptions Replay screen (§11.6) but does not enter the attendance sheet — payroll treats it separately.
+- Public holidays override the activity column with the localised `Sviatok` / `Holiday` label; the time and hours still reflect the standard half-day split.
+- Hours are decimals with one digit precision (`4.0`, `4.5`, `6.0`). Decimal separator follows locale (`.` for EN, `,` for SK).
+- The XLSX has the first row (header) and the first column (Day) frozen for easy scrolling, and column widths set sensibly so labels are not truncated in either language.
+
+#### CSV companion (optional, secondary)
+
+A flat CSV companion file may be offered for HR scripts that prefer one row per person per half-day:
+
+`date | half | full_name | activity | time_range | hours`
+
+The same locale catalogue applies — `activity` is in the picked language; the `half` column and the header line follow the same locale rules. The CSV is informational only; the XLSX above is the canonical export.
 
 ### 11.2 Team calendar (in-portal view)
 
@@ -437,7 +514,7 @@ A standard working day is **08:00–12:00 + 12:30–16:30 = 8h** with a 30-minut
 
 The 30-minute lunch break keeps S1 ("30 min gap between half-day absence and same-day worktime") trivially satisfiable when the employee logs worktime in the standard slot. The user does not configure these ranges; the Admin can override globally if the company changes its working pattern.
 
-Worktime logged between 22:00 and 06:00 triggers S3 (soft warning, night-time work). No other clock-time-window soft warnings apply.
+Worktime logged with a start before 08:00 or an end after 16:30 triggers S2 (outside working window, soft). Worktime logged between 22:00 and 06:00 triggers S3 (night-time work, soft). Both are warnings only and never block submission.
 
 ## 13. Basic acceptance — what must work end-to-end on demo day
 
@@ -455,7 +532,7 @@ The senior + AI-assisted baseline. **All of the following are required and must 
 6. Employee submits a Paragraph absence with a PDF → manager approves → HR validates the document. Reject path also works end-to-end: HR rejects, absence transitions to Rejected (per §6.5 the entry stops contributing to `used`), in-portal notification produced for the employee, audit log updated. **Email delivery is Bonus.**
 7. Manager team calendar is a real grid: rows = team members, columns = days of current month, colour-coded cells, click-through to entry detail, pending-approval badges, BT badges. Switching months works.
 8. Manager approvals queue is live: appears immediately on submission, supports approve / reject with a reason, decision propagates to the employee instantly. **Skip-level approve via chain** (DEC-003) works — an ancestor in the org tree can approve a request routed to a subordinate manager.
-9. HR exports a monthly CSV and XLSX matching the column shape in §11.1. The XLSX has frozen header and column widths set sensibly.
+9. HR exports a monthly XLSX matching the two-sheet layout in §11.1. The Slovak export must match `Attendence_example_report.xlsx` (sheet names `Dochádzka` + `Nadčas`, activity labels per the catalogue in §11.1). The English export produces the same layout with translated headers and labels (`Attendance` + `Overtime`, etc.). The user's portal language preference picks the default; the download dialog allows a per-export override. The XLSX has the first row and the first column frozen and column widths set sensibly. A flat CSV companion is optional and informational only.
 10. HR documents queue is real: list of pending docs with file preview (image inline, PDF in iframe), approve / reject + reason. The employee's *My notifications* feed surfaces the validation outcome instantly (email is Bonus).
 11. Year-rollover dry-run on a fixture set produces correct outcomes for: leftover within limit (no bonus loss), leftover exceeding limit (bonus zeroed and excess lost), zero leftover. A button on the HR screen runs the rollover for real, with a confirmation modal and a side-by-side before/after preview.
 12. Audit log screen for HR / Admin: filterable by user, action, date. Each row shows actor, before-snapshot, after-snapshot.

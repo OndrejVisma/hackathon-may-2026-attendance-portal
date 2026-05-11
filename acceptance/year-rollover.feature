@@ -1,6 +1,11 @@
 # Year-rollover scenarios. The annual job runs at 00:05 on 1 January.
 # Tier: ALL @basic — the §13 #11 acceptance item is core.
 # Reference: product-spec.md §6.3 (worked examples Anna / Peter / Mária).
+#
+# Notification reading guide (per product-spec.md §10):
+#   In @basic scenarios, "receives a notification" asserts the in-portal
+#   notification record. The literal email is asserted only by the
+#   @bonus @email-channel scenario at the bottom of this file.
 
 Feature: Year rollover — statutory protected, bonus discretionary, dry-run preview
 
@@ -39,7 +44,7 @@ Feature: Year rollover — statutory protected, bonus discretionary, dry-run pre
     Then a confirmation modal renders the side-by-side before/after preview for every user
     When I confirm
     Then 2027 quotas are created exactly matching the preview
-    And every employee + HR receive a "Year rollover summary" email
+    And every employee + HR receive a "Year rollover summary" notification
 
   @basic @rollover
   Scenario: Statutory days are never lost — even when leftover exceeds the limit
@@ -59,9 +64,9 @@ Feature: Year rollover — statutory protected, bonus discretionary, dry-run pre
     Then Anna's 2027 sickday_allocated = "3", paragraph_allocated = "7", ocr_allocated = "7"
 
   @basic @rollover @notification
-  Scenario: Rollover summary email tells employees what happened and why
+  Scenario: Rollover summary notification tells employees what happened and why
     When I run the year-rollover for "2026 -> 2027"
-    Then Peter receives an email containing:
+    Then Peter receives a notification containing:
       | text snippet                                   |
       | "Carried over: 8 days"                         |
       | "Company bonus this year: 0 days"              |
@@ -73,3 +78,12 @@ Feature: Year rollover — statutory protected, bonus discretionary, dry-run pre
     And I open Peter's balances for 2027
     Then I see a "Bonus withheld" flag with value "yes"
     And the tooltip explains the >5-day leftover policy
+
+  # ---- Bonus — Email channel mirror ----
+
+  @bonus @email-channel
+  Scenario: Year-rollover summary also delivers an email to every employee + HR
+    Given the email-channel Bonus is declared in eval-meta.yaml
+    When the rollover is applied for "2026 -> 2027"
+    Then the SMTP capture contains a "Year rollover summary" email addressed to every employee
+    And the SMTP capture contains a "Year rollover summary" email addressed to every HR-role user
