@@ -1,5 +1,5 @@
 # HR-facing scenarios. Actor = a user with the HR role.
-# Tags: @basic / @bonus per DEC-004.
+# Tags: @basic / @bonus.
 #
 # Notification reading guide (per product-spec.md §10):
 #   In @basic scenarios, "receives an X notification" asserts the in-portal
@@ -133,7 +133,7 @@ Feature: HR — documents queue, monthly export, audit log, quotas, exceptions r
   # ---- Bonus ----
 
   @bonus @exceptions-replay
-  Scenario: Exceptions-replay surfaces past entries that now violate hard rules (DEC-006)
+  Scenario: Exceptions-replay surfaces past entries that now violate hard rules
     Given the global sickday default has been reduced from "5" to "3" effective "2026-01-01"
     And employee "Peter" has 4 sickdays recorded in 2026 under the older rule
     When I open the Exceptions Replay screen

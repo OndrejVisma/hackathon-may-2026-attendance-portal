@@ -2,12 +2,12 @@
 
 **Status:** Hackathon brief — single-day build window, team sizes 2-7, senior engineers with strong AI tooling.
 **Scope:** Frontend only. Framework-agnostic technical requirements. Teams pick the actual stack (React / Vue / Svelte / Angular / Solid / etc.).
-**Companion doc (canonical):** `hackathon-may-2026-attendance-portal/product-spec.md` — read first. This FE doc layers on top of the product spec and inherits the Basic / Bonus tier model (DEC-004) + judging rubric (DEC-007).
+**Companion doc (canonical):** `hackathon-may-2026-attendance-portal/product-spec.md` — read first. This FE doc layers on top of the product spec and inherits the Basic / Bonus tier model + judging rubric.
 **Date:** 2026-05-11
 
 ## Tier mapping — what is Basic vs Bonus on the FE
 
-The product spec's tier gate (Basic ≥ 90 % before any Bonus is counted, per DEC-004 + DEC-007) applies to FE requirements too. The table below maps each section of this doc to its tier so teams do not accidentally over-invest before Basic is green.
+The product spec's tier gate (Basic ≥ 90 % before any Bonus is counted) applies to FE requirements too. The table below maps each section of this doc to its tier so teams do not accidentally over-invest before Basic is green.
 
 | Section | Tier | Notes |
 |---|---|---|
@@ -18,7 +18,7 @@ The product spec's tier gate (Basic ≥ 90 % before any Bonus is counted, per DE
 | §5 Theming (light/dark/system) | **Basic** | Tokens-driven; system preference is the default. Cheap to keep. |
 | §6 i18n | **Basic** for SK (default language); **Bonus** for second locale (EN). Per product-spec §14 multi-language Bonus axis. The translation catalogue infrastructure is Basic so a second locale is a drop-in later. |
 | §7 Real-time | **Basic** = polling + optimistic UI. **Bonus** = websocket / SSE push (per product-spec §14). |
-| §8 Auth | **Basic** = mock-login (pick user, no password, DEC-005). **Bonus** = real OIDC / magic-link / password + bcrypt. |
+| §8 Auth | **Basic** = mock-login (pick user, no password). **Bonus** = real OIDC / magic-link / password + bcrypt. |
 | §9 File upload UX | **Basic** | Documents are required for Paragraph/OCR/Special (H8) — without upload UX the Basic flow fails. Camera capture is desirable but acceptable to drop if mobile (§14 mobile-friendly) is also being skipped. |
 | §10 Performance budgets | **Basic** | Lighthouse CI scores feed both the **Polish 10 pts** and the eval-runner's bundle-size gate. |
 | §11 Design system | **Basic** | Pick A / B / D (never build all atoms from scratch); tokens-driven. |
@@ -149,7 +149,7 @@ Mandatory bar. Internal app touching disability-related data (sickdays, PN, OCR)
 
 ## 8. Authentication and session
 
-> **Tier note (DEC-005).** **Basic = mock-login** — a user-picker bound to seeded fixture users; no password. The whole flow below (OIDC + PKCE) is the **Bonus** real-auth path. Implement the Basic path first; teams that finish Basic with time left implement the OIDC path and declare it in `eval-meta.yaml`.
+> **Tier note.** **Basic = mock-login** — a user-picker bound to seeded fixture users; no password. The whole flow below (OIDC + PKCE) is the **Bonus** real-auth path. Implement the Basic path first; teams that finish Basic with time left implement the OIDC path and declare it in `eval-meta.yaml`.
 
 - **Protocol (Bonus):** OIDC standard. Authorisation Code + PKCE flow. No implicit, no resource-owner-password.
 - **Provider:** team picks (Auth0, Keycloak, Microsoft, Google, or a mock issuer for the hackathon demo).

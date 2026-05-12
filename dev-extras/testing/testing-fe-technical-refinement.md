@@ -15,7 +15,7 @@
 
 ## Tier mapping — what is Basic vs Bonus on the FE testing lane
 
-The product spec's tier gate (Basic ≥ 90 % before any Bonus is counted, per DEC-004 + DEC-007) applies to testing too.
+The product spec's tier gate (Basic ≥ 90 % before any Bonus is counted) applies to testing too.
 
 | Section | Tier | Notes |
 |---|---|---|

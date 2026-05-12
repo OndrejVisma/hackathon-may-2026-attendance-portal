@@ -1,5 +1,5 @@
 # Employee-facing scenarios. Actor = an end-user without manager / HR / admin role.
-# Tags: @basic = Basic-tier, must pass before any Bonus axis is counted (DEC-004 + DEC-007).
+# Tags: @basic = Basic-tier, must pass before any Bonus axis is counted.
 #       @bonus = Bonus tier; counted only if Basic >= 90% pass.
 # Pre-conditions assume the seeded fixture set under integration/fixtures/.
 #
@@ -185,7 +185,7 @@ Feature: Employee — worktime, absences, balances, notifications
   # ---- Bonus-tier scenarios ----
 
   @bonus @auth
-  Scenario: Real auth — login via OIDC / magic-link / password (DEC-005)
+  Scenario: Real auth — login via OIDC / magic-link / password
     Given the team has chosen one real auth mechanism declared in eval-meta.yaml
     When I authenticate via that mechanism
     Then I land on my employee dashboard with my real identity bound

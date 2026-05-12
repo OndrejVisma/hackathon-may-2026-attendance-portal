@@ -2,9 +2,9 @@
 
 **Status:** Hackathon brief — single-day build window, team sizes 2–7, **senior engineers with strong AI tooling** (Claude Code / Cursor / equivalents). Scope is ambitious by design; teams are expected to ship a polished demoable application, not a sketch.
 **Audience:** Hackathon teams. Read this as the source of truth for *what* the portal does. Each team picks their own implementation stack.
-**Date:** 2026-05-06 (source); revised 2026-05-09 to apply DEC-003..006 from `../decisions.md`.
+**Date:** 2026-05-06 (source); revised 2026-05-09.
 
-> **Tier model (DEC-004).** This brief uses two scope tiers: **Basic** and **Bonus**. Basic must complete first; Bonus features are off-limits until *every* Basic acceptance scenario passes. Judges enforce the gate — Bonus axes count only when Basic ≥ 90% (DEC-007).
+> **Tier model.** This brief uses two scope tiers: **Basic** and **Bonus**. Basic must complete first; Bonus features are off-limits until *every* Basic acceptance scenario passes. Judges enforce the gate — Bonus axes count only when Basic ≥ 90%.
 
 ---
 
@@ -55,7 +55,7 @@ Build a self-contained web application that owns the whole attendance lifecycle:
 | Manage users, teams, manager links, roles | no | no | no | yes |
 | Import / edit public-holiday calendar | no | no | no | yes |
 
-A user can hold multiple roles. A manager is also an employee for their own absences. **Self-approval guard (DEC-003):** if the routed direct manager is the requester themselves, walk up the org tree to the first non-self ancestor; if exhausted (no ancestor) → HR group.
+A user can hold multiple roles. A manager is also an employee for their own absences. **Self-approval guard:** if the routed direct manager is the requester themselves, walk up the org tree to the first non-self ancestor; if exhausted (no ancestor) → HR group.
 
 ## 4. Absence types — rules and examples
 
@@ -64,7 +64,7 @@ Each absence type is its own product feature with its own rules. The portal must
 ### 4.1 Vacation
 
 **Purpose:** planned paid time off.
-**Approval:** required, by direct manager (or any ancestor per DEC-003).
+**Approval:** required, by direct manager (or any ancestor in the org tree).
 **Quota:** statutory + company-bonus (see §6).
 **Granularity:** full day or half day (morning OR afternoon).
 **Document:** none.
@@ -108,8 +108,6 @@ If the manager rejects, the entry transitions to Rejected and Anna is notified b
 **Notification:** direct manager, HR group, and the same-team members are emailed.
 
 **Example.** Mária is on PN from 2026-04-20 to 2026-04-30. She logs PN on the portal that morning. Manager + team + HR get email. HR receives the paper certificate from the doctor on 2026-05-02 and attaches it to the existing PN entry. No quota is touched.
-
-> **DEC-010 (deferred):** Whether PN and paternity leave should split into separate CSV codes (`PN` vs `OTC`) at export boundary while remaining unified in the workflow is open. Until decided, both export as `PN`.
 
 ### 4.4 Paragraph — doctor visit
 
@@ -241,7 +239,7 @@ The portal models quota balances as a **computed view over the absence-entry tab
 Consequences:
 - The cancel-vs-reject race (an absence cancelled by the employee at the same moment HR rejects its document) cannot double-refund — both transitions resolve to the same terminal state; the entry stops contributing to `used` exactly once.
 - Historical balance queries are reproducible by replaying entry states as of a target date; no separate counter to reconcile.
-- "Used" is naturally split into **realised** (entries whose date range has fully elapsed) vs **planned** (entries whose date range is today or in the future). The balance screen MAY surface this split (DEC-024 covers the UX).
+- "Used" is naturally split into **realised** (entries whose date range has fully elapsed) vs **planned** (entries whose date range is today or in the future). The balance screen MAY surface this split.
 
 ## 7. Approval workflow
 
@@ -259,7 +257,7 @@ Approved and Rejected are final. **Withdrawn is also terminal** — the request 
 
 **Sickday and PN bypass the Pending state.** The state machine above applies to manager-approved absence types (Vacation, Paragraph, OCR, Special leave, Overtime). **Sickday is auto-approved on submission** (subject to all hard rules in §9.1) — it has no Pending state and no manager involvement; HR may still override it post-hoc. **PN is self-declared** — the entry is recorded as Approved on submission with no manager involvement; HR attaches doctor's papers asynchronously. PN never decrements a quota (uncapped per §4.3).
 
-### 7.1 Routing (DEC-003 — replaces source §7.1)
+### 7.1 Routing
 
 - **Default approver:** the employee's `direct_manager_id`.
 - **Skip-level allowed:** any ancestor in the org tree (manager's manager, etc.) MAY also approve a routed request. The approvals queue exposes two filters: *routed-to-me* (default) and *I-can-approve-via-chain*.
@@ -270,7 +268,7 @@ Each user has exactly one `direct_manager_id` (nullable at top of tree). Fixture
 
 ### 7.2 Manager actions
 
-A manager opens the approvals queue. **By default the queue shows requests routed to me** (direct reports); the **skip-level filter** ("I can approve via chain") is opt-in and exposes any pending request from a descendant in the org tree (per DEC-003 / §7.1). For each pending request the manager sees:
+A manager opens the approvals queue. **By default the queue shows requests routed to me** (direct reports); the **skip-level filter** ("I can approve via chain") is opt-in and exposes any pending request from a descendant in the org tree (per §7.1). For each pending request the manager sees:
 - requester name + team,
 - absence type and dates,
 - remaining quota for the requester (so they can judge fairness),
@@ -402,7 +400,7 @@ Wide matrix layout. One row per **half-day** (morning + afternoon) for the entir
 | Weekend — time column (literal text instead of a range) | `Víkend` | `Weekend` |
 | Approved vacation absence (statutory or bonus, indistinguishable in this sheet) | `Dovolenka` | `Vacation` |
 | Approved sickday | `Sickday` | `Sickday` |
-| Approved PN / paternity (DEC-010 deferred — may split to `PN` vs `OTC` later) | `PN` | `Sick leave` |
+| Approved PN / paternity | `PN` | `Sick leave` |
 | Approved Paragraph / doctor visit | `Návšteva lekára` | `Doctor visit` |
 | Approved OCR / family-member care | `Sprevádzanie člena rodiny` | `Family care` |
 | Approved special leave | `Špeciálne voľno` | `Special leave` |
@@ -483,17 +481,17 @@ The manager can click a cell to drill in.
 
 ### 11.3 Balances report (per-user)
 
-For the picked year and user: every quota (statutory vacation, bonus vacation, sickday, paragraph, OCR) with allocated, used (per §6.5 — sum of Approved entries), reserved (sum of Pending), carried-over, remaining, and a "bonus lost?" flag. The "bonus lost?" flag is derived: it is `true` iff the picked year's `bonus_allocation == 0` while the previous year would have allocated the default — i.e. the over-accumulation penalty (§6.3) fired into this year. The balance screen MAY also surface the realised-vs-planned split (DEC-024 covers the UX).
+For the picked year and user: every quota (statutory vacation, bonus vacation, sickday, paragraph, OCR) with allocated, used (per §6.5 — sum of Approved entries), reserved (sum of Pending), carried-over, remaining, and a "bonus lost?" flag. The "bonus lost?" flag is derived: it is `true` iff the picked year's `bonus_allocation == 0` while the previous year would have allocated the default — i.e. the over-accumulation penalty (§6.3) fired into this year. The balance screen MAY also surface the realised-vs-planned split.
 
 ### 11.4 Pending approvals queue
 
-Manager dashboard default: every Pending request routed to them (`direct_manager_id` match), sorted oldest first. The skip-level filter from §7.2 ("I can approve via chain") is opt-in and broadens the queue to any Pending request from a descendant in the org tree (per DEC-003). HR dashboard: every Pending document.
+Manager dashboard default: every Pending request routed to them (`direct_manager_id` match), sorted oldest first. The skip-level filter from §7.2 ("I can approve via chain") is opt-in and broadens the queue to any Pending request from a descendant in the org tree. HR dashboard: every Pending document.
 
 ### 11.5 Audit log
 
-HR/Admin only. Filter by user, date, **action** (Submit, Approve, Reject, Withdraw, Cancel, HR-Override, Document-Approve, Document-Reject, Quota-Override, Year-Rollover-Apply). Every state change of an absence, approval, document, or per-user quota override is recorded with actor, timestamp, before-snapshot, after-snapshot. (Whether HR/Admin global *configuration* edits — global quota defaults, public holiday list, half-day windows — are also audited is open: see DEC-018.)
+HR/Admin only. Filter by user, date, **action** (Submit, Approve, Reject, Withdraw, Cancel, HR-Override, Document-Approve, Document-Reject, Quota-Override, Year-Rollover-Apply). Every state change of an absence, approval, document, or per-user quota override is recorded with actor, timestamp, before-snapshot, after-snapshot. (Whether HR/Admin global *configuration* edits — global quota defaults, public holiday list, half-day windows — are also audited is open.)
 
-### 11.6 Exceptions replay (Bonus tier — DEC-006)
+### 11.6 Exceptions replay (Bonus tier)
 
 **Behaviour, not mechanism.** The portal must surface submissions that *now* violate hard rules under current configuration; HR can review and act. Trigger mechanism is left to each team — scheduled job, on-config-change hook, on-demand button, or real-time recompute are all acceptable. Judges score on the resulting screen + correctness of flagged entries, not on how the recompute is wired.
 
@@ -518,20 +516,20 @@ Worktime logged with a start before 08:00 or an end after 16:30 triggers S2 (out
 
 ## 13. Basic acceptance — what must work end-to-end on demo day
 
-The senior + AI-assisted baseline. **All of the following are required and must pass the Gherkin acceptance scenarios in `acceptance/` before any Bonus axis is counted (DEC-004 + DEC-007).**
+The senior + AI-assisted baseline. **All of the following are required and must pass the Gherkin acceptance scenarios in `acceptance/` before any Bonus axis is counted.**
 
 **Suggested build order** (informative, not enforced): identity + mock auth (#1, #2) → worktime (#3) → first absence type — vacation full loop (#4) → sickday (#5) and Paragraph + document flow (#6) → manager calendar + approvals queue (#7, #8) → reports + balances (#9, #14) → year-rollover engine (#11) → audit log (#12) → notifications inbox (#13). Items #10 (HR documents queue) and #14 (balances) piggyback on the data model laid down by earlier items.
 
 > **Note on role separation.** The role matrix in §3 is a *logical* separation (HR sees documents, Admin manages structure) — it is not a security boundary. Privilege-elevation prevention (e.g. preventing an Admin from granting themselves the HR role) is **out of MVP scope**. Don't lose hackathon time hardening it.
 
 1. Admin creates teams, assigns managers (sets `direct_manager_id` on each user, building the org tree), invites users with roles. UI is polished, validates input, shows feedback.
-2. **Mock login** — pick a user from the seeded list, no password. (Real auth — OIDC / magic-link / password+bcrypt — is **Bonus**, see §14, per DEC-005.)
+2. **Mock login** — pick a user from the seeded list, no password. (Real auth — OIDC / magic-link / password+bcrypt — is **Bonus**, see §14.)
 3. Employee logs daily worktime: project optional, BT toggle, overtime auto-detect on entries > 8 h. Inline live validation as the user types, not just on submit.
 4. Employee submits a vacation request → manager's approvals queue updates without reload → manager approves → employee's *My notifications* feed shows the decision and balance refresh → team calendar reflects the change → vacation balance recomputes per §6.5. The whole loop renders without page reloads. **Email delivery of the same events is Bonus (§14).**
 5. Employee logs a sickday: every hard rule is enforced (full-day only, ≤ 3/year, no consecutive sickdays, working day only) → in-portal notification records produced for manager + team + HR. The block message is human-friendly and suggests the right alternative (e.g. "use PN"). **Email delivery is Bonus.**
 6. Employee submits a Paragraph absence with a PDF → manager approves → HR validates the document. Reject path also works end-to-end: HR rejects, absence transitions to Rejected (per §6.5 the entry stops contributing to `used`), in-portal notification produced for the employee, audit log updated. **Email delivery is Bonus.**
 7. Manager team calendar is a real grid: rows = team members, columns = days of current month, colour-coded cells, click-through to entry detail, pending-approval badges, BT badges. Switching months works.
-8. Manager approvals queue is live: appears immediately on submission, supports approve / reject with a reason, decision propagates to the employee instantly. **Skip-level approve via chain** (DEC-003) works — an ancestor in the org tree can approve a request routed to a subordinate manager.
+8. Manager approvals queue is live: appears immediately on submission, supports approve / reject with a reason, decision propagates to the employee instantly. **Skip-level approve via chain** works — an ancestor in the org tree can approve a request routed to a subordinate manager.
 9. HR exports a monthly XLSX matching the two-sheet layout in §11.1. The Slovak export must match `Attendence_example_report.xlsx` (sheet names `Dochádzka` + `Nadčas`, activity labels per the catalogue in §11.1). The English export produces the same layout with translated headers and labels (`Attendance` + `Overtime`, etc.). The user's portal language preference picks the default; the download dialog allows a per-export override. The XLSX has the first row and the first column frozen and column widths set sensibly. A flat CSV companion is optional and informational only.
 10. HR documents queue is real: list of pending docs with file preview (image inline, PDF in iframe), approve / reject + reason. The employee's *My notifications* feed surfaces the validation outcome instantly (email is Bonus).
 11. Year-rollover dry-run on a fixture set produces correct outcomes for: leftover within limit (no bonus loss), leftover exceeding limit (bonus zeroed and excess lost), zero leftover. A button on the HR screen runs the rollover for real, with a confirmation modal and a side-by-side before/after preview.
@@ -539,13 +537,13 @@ The senior + AI-assisted baseline. **All of the following are required and must 
 13. *My notifications* screen per user: every notification record produced for me, in chronological order, with the rendered subject + body. (When the email channel Bonus is implemented, the same record corresponds 1:1 with the email actually sent.)
 14. Quota & balances screen per user: every quota type with allocated / used / **reserved** (Pending entries per §6.5) / carried-over / remaining / lost-bonus flag, plus an annual usage chart by month.
 
-## 14. Bonus tier — only counted if Basic ≥ 90% (DEC-004 + DEC-007)
+## 14. Bonus tier — only counted if Basic ≥ 90%
 
 Off-limits until every Basic scenario passes. Judges enforce the gate.
 
-- **Real auth** — Google / Microsoft OIDC, magic-link email, or password + bcrypt (DEC-005).
-- **§11.6 Exceptions replay** — surface submissions now violating hard rules under current config; trigger mechanism is the team's call (DEC-006).
-- **Skip-level *policy* enforcement** — beyond DEC-003's permission, allow a configurable rule per team (e.g. vacation > 5 consecutive days requires both direct manager and skip-level).
+- **Real auth** — Google / Microsoft OIDC, magic-link email, or password + bcrypt.
+- **§11.6 Exceptions replay** — surface submissions now violating hard rules under current config; trigger mechanism is the team's call.
+- **Skip-level *policy* enforcement** — beyond the baseline permission to skip-level approve, allow a configurable rule per team (e.g. vacation > 5 consecutive days requires both direct manager and skip-level).
 - **Notification & calendar axes** — four related but distinct mechanisms; teams can pick any subset. Email is the foundational dispatcher, the others layer on it.
   - **Email delivery channel** (foundational) — fan out the in-portal notification records of §10 over SMTP. Single template per event; respect the dedup rule. Most other notification axes assume a working email dispatcher.
   - **Slack and/or Teams notification channels** — push the same events to chat. The dispatcher should be pluggable; reuse the email template registry.
@@ -554,7 +552,7 @@ Off-limits until every Basic scenario passes. Judges enforce the gate.
 - **Mobile-friendly responsive UI.** The team calendar can degrade gracefully on phones; the absence form should work fully on mobile.
 - **PWA or installable shell**, so employees can launch the portal as an app on their phone home screen.
 - **Multi-language UI.** Slovak + English at minimum. The rule messages are user-visible and benefit most.
-- **Tempo XLSX import.** Drop a historical Tempo export onto the HR screen, the portal ingests it, classifies entries with the new rule engine, shows the diff before committing. The classify-against-current-rules step shares its replay engine with §11.6 / DEC-006 (Exceptions replay) — implement the engine once and reuse for both axes.
+- **Tempo XLSX import.** Drop a historical Tempo export onto the HR screen, the portal ingests it, classifies entries with the new rule engine, shows the diff before committing. The classify-against-current-rules step shares its replay engine with §11.6 (Exceptions replay) — implement the engine once and reuse for both axes.
 - **HR bulk-edit of quotas** via uploaded CSV; preview diff before applying.
 - **Manager analytics:** team-level absence patterns (heat map of absences by week), average approval latency, soft-warning hot spots.
 - **Live websocket updates** so the manager's approvals queue updates without refresh when an employee submits.
@@ -568,30 +566,30 @@ Off-limits until every Basic scenario passes. Judges enforce the gate.
 - Migration of *production* historical Tempo data with full data integrity. (The §14 Bonus axis "Tempo XLSX import" is a sandbox version — drop a file, see the diff, optionally commit. Out-of-scope here is the harder problem: real-data validation, dedup against existing entries, conflict resolution, and a rollback path.)
 - Multi-tenant SaaS architecture.
 - Multi-country support beyond Slovak rules.
-- Real Visma corporate SSO integration end-to-end including provisioning. (A generic OIDC flow against Google or Microsoft personal account is fair game and counts as Bonus per DEC-005.)
+- Real Visma corporate SSO integration end-to-end including provisioning. (A generic OIDC flow against Google or Microsoft personal account is fair game and counts as Bonus.)
 - Native iOS / Android apps.
 - Offline mode with conflict resolution.
 
 ## 16. Open questions and chosen defaults
 
-Tier placement (Basic vs Bonus) is now settled by DEC-004..006. Remaining defaults:
+Tier placement (Basic vs Bonus) is now settled. Remaining defaults:
 
 | # | Question | Default applied if a team does not address it |
 |---|---|---|
-| O1 | What auth mechanism for the demo? | **Mock login (Basic per DEC-005).** Real auth is Bonus. |
+| O1 | What auth mechanism for the demo? | **Mock login (Basic).** Real auth is Bonus. |
 | O2 | "Same-team members" for sickday/PN notifications — same `team` only, or also project teammates? | Same `team` only. |
 | O3 | What happens when an Approved absence is later cancelled by the employee? | Withdrawal allowed up to one day before; quota refunded; audit entry written. After that day, HR-only. |
 | O4 | Half-day morning vs afternoon time ranges? | Morning 08:00–12:00, afternoon 12:30–16:30 (per §12.2). |
 | O5 | Should public holidays block worktime entries? | Soft warn only. |
 | O6 | First-year prorated entitlement for new hires? | Out of MVP — full year entitlement on join. |
-| O7 | Self-approving manager — escalate where? | Walk up org tree to first non-self ancestor; HR group if exhausted (DEC-003). |
+| O7 | Self-approving manager — escalate where? | Walk up org tree to first non-self ancestor; HR group if exhausted. |
 | O8 | PN doctor's papers — uploaded by employee or HR? | Either is fine; the document attaches to the same PN entry. |
 
-Further open questions raised during spec authoring (PN/paternity workflow split, cancel-vs-reject race, H7 vs PN weekends, split-day export rows, audit-log scope of HR config edits, accident-PN documents, special-leave soft-cap wording, sickday consecutive-working-days definition) are tracked organiser-side in the project's `decisions.md` (DEC-010, 011, 014..018, 022, 023, 026). Their resolution may produce small clarifications in this spec; no behaviour-affecting change is expected before the event.
+Further open questions raised during spec authoring (PN/paternity workflow split, cancel-vs-reject race, H7 vs PN weekends, split-day export rows, audit-log scope of HR config edits, accident-PN documents, special-leave soft-cap wording, sickday consecutive-working-days definition) are tracked organiser-side. Their resolution may produce small clarifications in this spec; no behaviour-affecting change is expected before the event.
 
 ## 17. UX guidance
 
-The bullets below are split into a **Basic UX baseline** (required for the §13 acceptance scenarios to feel genuinely usable) and **Polish Bonus axes** (counted only when Basic ≥ 90% per DEC-007; see also §14).
+The bullets below are split into a **Basic UX baseline** (required for the §13 acceptance scenarios to feel genuinely usable) and **Polish Bonus axes** (counted only when Basic ≥ 90%; see also §14).
 
 ### 17.1 Basic UX baseline (required)
 

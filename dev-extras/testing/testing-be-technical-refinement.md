@@ -4,7 +4,7 @@
 **Scope:** Backend testing only. Framework-agnostic technical requirements. Teams pick the actual stack (Node + Vitest / Jest / Mocha, Python + pytest, Go + `testing` + testify, Java/Kotlin + JUnit, C# + xUnit, Rust + `cargo test`, Ruby + RSpec, …).
 **Companion docs (canonical):**
 - `hackathon-may-2026-attendance-portal/product-spec.md` — *read first.* Source of truth for product behaviour, hard/soft rules, state machine, quota model, approval routing, year rollover, export contract, audit log.
-- `hackathon-may-2026-attendance-portal/dev-extras/frontend/fe-technical-refinement.md` — sibling FE refinement; this doc layers on top of the same tier model (DEC-004 + DEC-007).
+- `hackathon-may-2026-attendance-portal/dev-extras/frontend/fe-technical-refinement.md` — sibling FE refinement; this doc layers on top of the same tier model.
 **Date:** 2026-05-12
 
 > **This document is the source of truth for backend testing.** It defines, framework-agnostically, what the backend test suite must prove about the system. Each section maps directly to a behaviour or contract from the product spec. The companion scoring rubric is `hackathon-may-2026-scoring-system/agents/testing-be.md`.
@@ -13,7 +13,7 @@
 
 ## Tier mapping — what is Basic vs Bonus on the backend testing lane
 
-The product spec's tier gate (Basic ≥ 90 % before any Bonus is counted, per DEC-004 + DEC-007) applies to testing too. The table below maps each section of this doc to its tier so teams do not accidentally over-invest before Basic is green.
+The product spec's tier gate (Basic ≥ 90 % before any Bonus is counted) applies to testing too. The table below maps each section of this doc to its tier so teams do not accidentally over-invest before Basic is green.
 
 | Section | Tier | Notes |
 |---|---|---|
@@ -24,7 +24,7 @@ The product spec's tier gate (Basic ≥ 90 % before any Bonus is counted, per DE
 | §5 Soft rules S1-S6 matrix | **Basic** | Both positive and negative cases per rule. |
 | §6 State machine + transitions | **Basic** | Allowed transitions succeed, forbidden ones fail with a clear error. |
 | §7 Quota computed view | **Basic** | Spec §6.5 is load-bearing — must be verified through tests, not just code review. |
-| §8 Approval routing + skip-level + self-approval | **Basic** | DEC-003 is the test surface. |
+| §8 Approval routing + skip-level + self-approval | **Basic** | Org-tree routing + skip-level + self-approval guard is the test surface. |
 | §9 Document validation flow | **Basic** | Spec §8. H8 hold and reject-after-approve are the two critical paths. |
 | §10 Year-rollover | **Basic** | Anna / Peter / Mária worked examples + dry-run/apply equivalence. |
 | §11 XLSX export contract | **Basic** | Two-sheet structure + activity catalogue + SK/EN bilingual. |
@@ -165,7 +165,7 @@ This is the single most load-bearing piece of backend logic. Tests must prove th
 
 If the team's implementation uses a stored counter, the tests should expose it. Reject the implementation on review.
 
-## 8. Approval routing + skip-level + self-approval guard (DEC-003)
+## 8. Approval routing + skip-level + self-approval guard
 
 - **Default routing** — every submission routes to `direct_manager_id`. Test with a fixture tree of depth ≥ 3.
 - **Skip-level filter** — an ancestor opens the queue with filter "I can approve via chain" and sees descendant requests. Approve-as-ancestor works and the audit log records "skip-level" as the actor type.
