@@ -33,28 +33,33 @@ How well-shaped are the individual stories?
 
 | Band | Description | Pts |
 |---|---|---|
-| High | Every story fits one screen. Every story has a linked Gherkin scenario, named rules, named notifications, named audit events, and a Demo cue. Sizing is plausible at 2h. INVEST principles (Independent, Negotiable, Valuable, Estimable, Small, Testable) visibly applied. No story rewrites the spec. | 20-25 |
-| Medium | Most stories follow the template. A handful are oversized or under-shaped. Demo cue missing on ~20%. Some stories reference no Gherkin. | 12-19 |
-| Low | Stories are paragraphs, not slices. Sizing is not credible. Demo cues missing on > 50%. Template fields half-filled. | 5-11 |
-| Floor | Stories are spec excerpts copy-pasted. No template applied. | 0-4 |
+| High | Every story fits one screen. Every story carries **at least one Given/When/Then scenario** in its body, well-formed (Given = state, When = single action, Then = observable outcome). Most stories cover happy path + ≥ 1 rule trip + ≥ 1 edge. Mapping to `acceptance/` is accurate; proposed-new scenarios are clearly marked. Sizing is plausible at 2h. INVEST principles (Independent, Negotiable, Valuable, Estimable, Small, Testable) visibly applied. Demo cue per story. | 20-25 |
+| Medium | Most stories follow the template. G/W/T present but shallow (happy path only on ≥ 50%, no rule trips covered). A handful oversized or under-shaped. Demo cue missing on ~20%. | 12-19 |
+| Low | Stories are paragraphs, not slices. G/W/T missing or malformed (Given used as action, Then used as hope). Sizing not credible. Demo cues missing on > 50%. | 5-11 |
+| Floor | Stories are spec excerpts copy-pasted. No G/W/T. No template applied. | 0-4 |
 
 Common evidence:
 - A judge reading any single story understands what to build and how to demo it in < 60 seconds.
 - The 2h sizing claim is checkable — the story is small enough that a senior + AI pair would plausibly finish it.
+- G/W/T scenarios tie to concrete fixture users (Anna, Tomáš, Janka, …) where possible — concrete beats abstract.
 - Bonus stories carry an explicit "recommend only after Basic ≥ 90%" annotation.
+
+**Penalties under this axis (subtract from band):**
+- G/W/T that contradicts the matching `acceptance/` scenario without flagging the conflict: −2 pts per occurrence.
+- "Should" / "could" / "might" in `Then` clauses: −1 pt per occurrence.
 
 ## Axis 2 — Coverage (20 pts)
 
-Does the bundle cover the Basic surface?
+Does the bundle cover the Basic surface — both as stories and as G/W/T scenarios?
 
 | Band | Description | Pts |
 |---|---|---|
-| High | All 14 spec §13 items sliced. All 10 hard rules (H1-H10) have a home story. All 6 soft rules (S1-S6) have a home story. State transitions for each absence type covered (submit / approve / reject / withdraw / cancel). | 17-20 |
-| Medium | 12+ of 14 §13 items sliced. 8+ of 10 hard rules covered. 4+ of 6 soft rules covered. | 11-16 |
-| Low | 8-11 of 14 §13 items sliced. < 8 hard rules covered. Most soft rules missing. | 4-10 |
+| High | All 14 spec §13 items sliced. All 10 hard rules (H1-H10) covered by at least one G/W/T scenario in some story (positive + negative case where applicable). All 6 soft rules (S1-S6) covered by at least one G/W/T. State transitions for each absence type covered (submit / approve / reject / withdraw / cancel). ≥ 3 "proposed new" scenarios surface real gaps in `acceptance/`. | 17-20 |
+| Medium | 12+ of 14 §13 items sliced. 8+ of 10 hard rules covered by G/W/T. 4+ of 6 soft rules. Few or no proposed-new scenarios. | 11-16 |
+| Low | 8-11 of 14 §13 items sliced. < 8 hard rules covered. Most soft rules missing from G/W/T. | 4-10 |
 | Floor | < 8 §13 items sliced. | 0-3 |
 
-A coverage matrix in the bundle (which story covers which spec section) is the natural evidence. Gaps you identify and flag honestly do **not** lose points — gaps you hide do.
+A coverage matrix in the bundle (which story covers which spec section + which G/W/T covers which rule) is the natural evidence. Gaps you identify and flag honestly do **not** lose points — gaps you hide do. "Proposed new" scenarios that surface a genuine `acceptance/` gap earn points at this axis *and* under Story quality.
 
 ## Axis 3 — Dependency analysis (15 pts)
 

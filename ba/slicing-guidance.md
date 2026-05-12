@@ -30,6 +30,30 @@ A single-day hackathon nets ~10 effective build hours after kickoff, demo prep, 
 
 Numbers assume AI tooling. Without it, halve them. These are **defaults you publish in your bundle** — not numbers you defend in a stand-up you do not attend.
 
+## Acceptance criteria — every story carries Given/When/Then
+
+Each story you author includes **at least one Given/When/Then scenario** in its body. Two-to-five scenarios is typical for a 2h slice: happy path + 1-2 rule trips + 1-2 edges.
+
+**Why you author your own** — the `acceptance/*.feature` files in the brief repo are the **judging contract** (pre-authored, shipped to teams, used as the TDD spec and rubric). They are not editable by BAs. Your G/W/T are **analysis output**: how you (the BA) think the story behaves end-to-end. The two can sit side-by-side without conflict; when they disagree, `acceptance/` wins by definition.
+
+**Three uses for BA-authored G/W/T:**
+
+1. **Mirror-and-elaborate.** Re-write the existing `acceptance/` scenario in your own words, often with additional `And` clauses covering notification + audit fan-out. Cite the canonical scenario in `Mapping → Existing Gherkin`. This shows you read and understood the contract.
+2. **Edge cases.** Identify combinations the upfront Gherkin missed (rule combos, transition edges, slot conflicts across absence types). Mark the scenario `(proposed)`. These are the highest-value contributions in the bundle.
+3. **Bonus axes.** Where `acceptance/` covers Bonus surfaces only at a high level (e.g. the `@bonus @email-channel` block), elaborate G/W/T per concrete behaviour (dedup, idempotency, template registry).
+
+**Authoring discipline:**
+
+- Given = state, not action. "Anna has 3 vacation days remaining" — not "Anna logs in".
+- When = a single user action. One verb.
+- Then = an observable outcome. UI state, persisted state, notification record, audit entry.
+- `And` / `But` for additional clauses inside a step.
+- Tie to seeded fixture users (Anna, Tomáš, Janka, Peter, Mária) where you can — concrete beats abstract.
+- One scenario per outcome shape (Approve and Reject = two scenarios, not one with branches).
+- No "should" / "could" / "might". Then is a fact.
+
+See [`story-template.md`](story-template.md) for the full template + three worked examples (Basic vertical, Basic rule-only, Bonus gated).
+
 ## Coverage pass — the Basic 14
 
 Spec §13 lists 14 items. Each gets sliced into 1-4 stories. Starting point:

@@ -24,7 +24,7 @@ This means: when a question comes up that the spec does not answer, the team pic
 
 A single artefact bundle, due at the end of the day, sized to fit in one folder or one document:
 
-1. **Story set** — ~30 stories covering spec §13 + §9 rule catalogue, using [`../ba/story-template.md`](../ba/story-template.md). 2-hour-target slices.
+1. **Story set** — ~30 stories covering spec §13 + §9 rule catalogue, using [`../ba/story-template.md`](../ba/story-template.md). 2-hour-target slices. **Every story carries at least one Given/When/Then scenario** in its body — most stories have 2-5 (happy path + rule trips + edges). The `acceptance/*.feature` files are the judging contract authored upfront; your G/W/T are *analysis output* — they may mirror existing scenarios, elaborate with notification + audit fan-out, or propose new scenarios that surface gaps in `acceptance/`.
 2. **Dependency map** — visual or tabular, showing which stories block which. Critical path identified.
 3. **Bonus axis ROI ranking** — top 5 Bonus axes from spec §14, with reasoning, sequenced for a team that already has Basic ≥ 90%.
 4. **Traceability matrix** — one row per story, columns: spec section, Gherkin scenario, hard/soft rules hit, notifications, audit. Catches gaps before judges do.
@@ -46,8 +46,8 @@ These are tracks, not a schedule. Move between them as productive.
 
 | Track | What you produce |
 |---|---|
-| **Coverage pass** | Slice spec §13 (14 items) into ~25-30 stories. Use the template. |
-| **Rule pass** | Cross-check spec §9 (H1-H10 + S1-S6). Every rule needs at least one story. |
+| **Coverage pass** | Slice spec §13 (14 items) into ~25-30 stories. Use the template. Author Given/When/Then per story. |
+| **Rule pass** | Cross-check spec §9 (H1-H10 + S1-S6). Every rule needs at least one G/W/T scenario (positive + negative where applicable). Identify combos `acceptance/` missed → propose new G/W/T. |
 | **Dependency pass** | Build the dependency map; identify critical path; flag stories that block many. |
 | **Bonus ROI pass** | Rank spec §14 axes by effort × judge-visibility × code-reuse-with-Basic. Top 5 with reasoning. |
 | **Traceability pass** | Build the matrix. Use it to find gaps in your own coverage pass. |
