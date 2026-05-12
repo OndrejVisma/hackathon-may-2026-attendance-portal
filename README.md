@@ -11,7 +11,7 @@ Welcome. This folder is the **single source of truth** for what you are building
 - **LLM access:** bring your own Premium Claude seat (Pro or Max). No organiser budget.
 - **Demo:** every team demos working software at the end of the day. Eval-runner runs after demos.
 
-## Two-bundle structure (DEC-012)
+## Two-bundle structure
 
 This brief is split by audience at the file level so a BA-only cut is cheap to extract:
 
@@ -20,12 +20,12 @@ This brief is split by audience at the file level so a BA-only cut is cheap to e
 
 Branch model: `main` carries both bundles during prep. A `requirements-only` cut can be produced at any time by `git rm -rf hackathon-brief/dev-extras/` on a fork or branch. Cross-references from core into `dev-extras/` are tolerant — they degrade to "not in this bundle" rather than break.
 
-## Tier model — Basic vs Bonus (DEC-004)
+## Tier model — Basic vs Bonus
 
 Two tiers. **Basic must complete first.** Bonus features are **off-limits** until every Basic acceptance scenario passes.
 
 - **Basic** — the §13 must-have set in `product-spec.md`. The Gherkin scenarios in [`acceptance/`](acceptance/) are the rubric — they double as your TDD spec and the judge's checklist.
-- **Bonus** — §14 features. Real auth (DEC-005), exceptions replay (DEC-006), Slack/ICS, analytics, etc. Counted only when Basic ≥ 90% (DEC-007).
+- **Bonus** — §14 features. Real auth, exceptions replay, Slack/ICS, analytics, etc. Counted only when Basic ≥ 90%.
 
 If the eval-runner sees you started a Bonus axis with Basic incomplete, you forfeit Bonus points. Don't.
 
@@ -53,7 +53,7 @@ If the eval-runner sees you started a Bonus axis with Basic incomplete, you forf
 | [`dev-extras/integration/fixtures/`](dev-extras/integration/fixtures/) *(TBD)* | dev + QA | Users, teams, holidays, quotas, in-flight absences, sample docs. |
 | [`dev-extras/nfr/performance.yaml`](dev-extras/nfr/performance.yaml) *(TBD)* | dev | Latency + calendar grid render targets. |
 | [`dev-extras/nfr/time-budget.yaml`](dev-extras/nfr/time-budget.yaml) *(TBD)* | dev | Build-window cap + per-phase guidance. |
-| [`dev-extras/frontend/fe-technical-refinement.md`](dev-extras/frontend/fe-technical-refinement.md) | frontend dev | FE technical refinement — 38 sections framework-agnostic (responsive, PWA, a11y WCAG 2.2 AA, theming, i18n, real-time, auth, file upload, perf budgets, design system, state, forms, security, testing, build/eval-runner, code architecture, DI, TZ handling, API contract, etc.) with Basic / Bonus tier mapping per DEC-004. |
+| [`dev-extras/frontend/fe-technical-refinement.md`](dev-extras/frontend/fe-technical-refinement.md) | frontend dev | FE technical refinement — 38 sections framework-agnostic (responsive, PWA, a11y WCAG 2.2 AA, theming, i18n, real-time, auth, file upload, perf budgets, design system, state, forms, security, testing, build/eval-runner, code architecture, DI, TZ handling, API contract, etc.) with Basic / Bonus tier mapping. |
 | [`dev-extras/role-quickstarts/`](dev-extras/role-quickstarts/) *(TBD)* | dev / QA | Per-role 5-min entry: backend dev/QA, frontend dev/QA. |
 
 ## Role start map
@@ -80,7 +80,7 @@ Don't read everything. Pick your role, follow the quickstart.
 7. **Commit often, push often.** Eval-runner pulls your repo at demo time.
 8. **At demo time, ship `eval-meta.yaml`.** Declares stack ids, `make eval` entrypoint, high-risk paths. Without it your submission can't be eval'd → you forfeit deterministic + AI eval points.
 
-## Judging rubric (DEC-007)
+## Judging rubric
 
 Total **160 points**.
 
@@ -108,23 +108,6 @@ Reproducibility: fixed model + temperature 0, prompts versioned in this repo, pe
 
 See `product-spec.md` §15. Don't build native apps, multi-tenant SaaS, real Visma corporate SSO, or production Tempo migration. Generic OIDC against Google / Microsoft personal accounts is fair game (Bonus).
 
-## Authoring decisions (organiser-side, summary)
-
-The brief was authored from a longer source doc with the following decisions applied. Numbers are organiser-internal; included so participants understand *why* the spec looks like it does.
-
-- **DEC-003 — Org tree with skip-level approval.** Spec §3 / §7.1: every user has one `direct_manager_id`; any ancestor in the chain may approve; self-approval guard escalates up to first non-self ancestor.
-- **DEC-004 — Two-tier scope (Basic + Bonus, hard gate).** Spec §13 / §14.
-- **DEC-005 — Auth tier:** mock = Basic, real auth = Bonus.
-- **DEC-006 — Exceptions replay (§11.6) → Bonus, behaviour-only.** Trigger mechanism is the team's call.
-- **DEC-007 — Judging rubric** (160 points; section above).
-- **DEC-009 — Each participant brings own Premium Claude seat.** No organiser LLM budget.
-- **DEC-012 — Brief split into core + `dev-extras/` bundles**, with `requirements-only` branch as the BA cut.
-
-Two open questions are deferred (defaults documented in `product-spec.md` §11.1 hold until resolved):
-
-- **DEC-010 — PN vs paternity CSV code.** Both export as `PN` for now.
-- **DEC-011 — CSV `errors` column escaping.** RFC 4180 quoting is the recommended placeholder.
-
 ## Source document
 
-This brief derives from the internal Drive doc *Attendance Portal — Functional Refinement*, 2026-05-06. The spec in this repository supersedes that doc for hackathon purposes (DEC-003..006 applied).
+This brief derives from the internal Drive doc *Attendance Portal — Functional Refinement*, 2026-05-06. The spec in this repository supersedes that doc for hackathon purposes.

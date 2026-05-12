@@ -1,5 +1,5 @@
 # Admin-facing scenarios. Actor = a user with the Admin role.
-# Tags: @basic / @bonus per DEC-004.
+# Tags: @basic / @bonus.
 
 Feature: Admin — users, teams, org tree, public holidays
 
@@ -22,7 +22,7 @@ Feature: Admin — users, teams, org tree, public holidays
     Then Peter's roles are reduced to "Employee"
     And Peter no longer sees the approvals queue
 
-  # ---- Teams + org tree (DEC-003) ----
+  # ---- Teams + org tree ----
 
   @basic @teams
   Scenario: Admin creates teams and assigns members
@@ -47,7 +47,7 @@ Feature: Admin — users, teams, org tree, public holidays
   Scenario: Removing a manager link routes affected employees to HR group as fallback
     Given Anna's direct_manager is "LeadA1"
     When I clear Anna's direct_manager
-    Then any new approval Anna submits routes to the HR group (per DEC-003 §7.1)
+    Then any new approval Anna submits routes to the HR group (per §7.1)
 
   # ---- Public holidays ----
 

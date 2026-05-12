@@ -1,5 +1,5 @@
 # Manager-facing scenarios. Actor = a user with the Manager role plus an underlying Employee role.
-# Tags: @basic / @bonus per DEC-004.
+# Tags: @basic / @bonus.
 #
 # Notification reading guide (per product-spec.md §10):
 #   In @basic scenarios, "receives an X notification" asserts the in-portal
@@ -7,7 +7,7 @@
 #   literal email is asserted only by @bonus @email-channel scenarios at the
 #   bottom of this file.
 
-Feature: Manager — approvals queue, team calendar, skip-level chain (DEC-003)
+Feature: Manager — approvals queue, team calendar, skip-level chain
 
   Background:
     Given the seeded fixture org tree is loaded:
@@ -52,7 +52,7 @@ Feature: Manager — approvals queue, team calendar, skip-level chain (DEC-003)
     Then the queue updates to show 1 entry referencing Peter
     And no full page reload occurred
 
-  # ---- Skip-level approve via chain (DEC-003) ----
+  # ---- Skip-level approve via chain ----
 
   @basic @skip-level
   Scenario: Ancestor in org tree can approve a request routed to a subordinate manager
@@ -64,7 +64,7 @@ Feature: Manager — approvals queue, team calendar, skip-level chain (DEC-003)
     Then the request status is "Approved"
     And the audit log records "DeptHeadA" as the approving actor (skip-level)
 
-  # ---- Self-approval guard (DEC-003) ----
+  # ---- Self-approval guard ----
 
   @basic @self-approval
   Scenario: Manager submitting own request escalates one level up
@@ -113,7 +113,7 @@ Feature: Manager — approvals queue, team calendar, skip-level chain (DEC-003)
   # ---- Bonus ----
 
   @bonus @approvals @policy
-  Scenario: Skip-level POLICY enforcement (DEC-003 stretch)
+  Scenario: Skip-level POLICY enforcement (stretch)
     Given the team policy requires both direct manager AND skip-level approval for vacation > 5 consecutive days
     And employee "Anna" submits a Vacation from "2026-07-13" to "2026-07-21" (7 working days)
     When I (LeadA1) Approve the request
