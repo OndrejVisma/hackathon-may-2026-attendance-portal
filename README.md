@@ -38,9 +38,9 @@ If the eval-runner sees you started a Bonus axis with Basic incomplete, you forf
 | [`product-spec.md`](product-spec.md) | all | Behaviour spec. Read first. |
 | [`acceptance/`](acceptance/) | all | Gherkin features = judging rubric. **Treat as TDD spec.** |
 | [`demo-format.md`](demo-format.md) *(TBD)* | all | Run order, time per team, required artifacts (`eval-meta.yaml`). |
-| [`ba/story-template.md`](ba/story-template.md) *(TBD)* | BA | Story slicing template. |
-| [`ba/slicing-guidance.md`](ba/slicing-guidance.md) *(TBD)* | BA | How to break Basic into 2h slices. |
-| [`role-quickstarts/business-analyst.md`](role-quickstarts/business-analyst.md) *(TBD)* | BA | 5-min entry for BAs. |
+| [`ba/story-template.md`](ba/story-template.md) | BA | Story slicing template. |
+| [`ba/slicing-guidance.md`](ba/slicing-guidance.md) | BA | How to break Basic into 2h slices. |
+| [`role-quickstarts/business-analyst.md`](role-quickstarts/business-analyst.md) | BA | 5-min entry for BAs. |
 | [`role-quickstarts/solo-or-multi.md`](role-quickstarts/solo-or-multi.md) *(TBD)* | all | Vertical slice plan for 2–3 person teams. |
 
 ### Dev-extras bundle (`dev-extras/` — build teams read)
@@ -66,7 +66,7 @@ Don't read everything. Pick your role, follow the quickstart.
 | **Backend QA / SDET** | core + dev-extras | [`dev-extras/role-quickstarts/backend-qa.md`](dev-extras/role-quickstarts/backend-qa.md) | `acceptance/*.feature` → `dev-extras/integration/fixtures/` |
 | **Frontend dev** | core + dev-extras | [`dev-extras/role-quickstarts/frontend-dev.md`](dev-extras/role-quickstarts/frontend-dev.md) *(TBD)* | `dev-extras/frontend/fe-technical-refinement.md` → spec §17 |
 | **Frontend QA** | core + dev-extras | [`dev-extras/role-quickstarts/frontend-qa.md`](dev-extras/role-quickstarts/frontend-qa.md) | `acceptance/employee.feature` + `manager.feature` |
-| **Business Analyst** | core only | [`role-quickstarts/business-analyst.md`](role-quickstarts/business-analyst.md) | `ba/story-template.md` + `ba/slicing-guidance.md` |
+| **Business Analyst** | core only | [`role-quickstarts/business-analyst.md`](role-quickstarts/business-analyst.md) | [`ba/slicing-guidance.md`](ba/slicing-guidance.md) + [`ba/story-template.md`](ba/story-template.md) |
 | **Solo or 2-person team** | core + dev-extras | [`role-quickstarts/solo-or-multi.md`](role-quickstarts/solo-or-multi.md) | vertical slice plan |
 
 ## Ground rules
