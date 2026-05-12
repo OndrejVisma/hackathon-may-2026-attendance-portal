@@ -1,80 +1,117 @@
-# Slicing Guidance — Breaking Basic into 2-Hour Stories
+# Slicing Guidance — The Analyst Playbook
 
-**Audience:** Business Analyst on a hackathon team, preparing the backlog before kickoff or during the first hour.
-**Purpose:** Turn the 14 Basic items from product-spec §13 into ~30-40 stories of ~2h each, sequenced so the team always has demo-able output.
-**Companion:** [`story-template.md`](story-template.md) — the per-story shape.
+**Audience:** Business Analyst at the hackathon, producing the analysis bundle.
+**Purpose:** How to slice spec §13 into a complete, dependency-aware story set; how to build the supporting analysis artefacts.
+**Companion docs:** [`story-template.md`](story-template.md) for per-story shape, [`scoring-rubric.md`](scoring-rubric.md) for how the bundle is judged.
 **Date:** 2026-05-12
 
-> **The 2-hour rule.** A senior engineer with strong AI tooling can deliver a vertical slice in ~2h. Smaller than that and ceremony eats the budget. Larger than that and the team flies blind between commits. Aim for 2h; flag anything > 3h for re-slicing on the spot.
+> **You are not on a build team.** Dev teams build from [`../product-spec.md`](../product-spec.md), [`../acceptance/`](../acceptance/), and the OpenAPI spec at the brief-repo root. They do not wait on your stories. This document is about producing your **own deliverable** at depth — a parallel artefact judged on its own merit. See [`../role-quickstarts/business-analyst.md`](../role-quickstarts/business-analyst.md) first.
+
+> **The spec is the contract.** Anything `product-spec.md` does not define is the team's discretion. Do not invent requirements. Document what's there; flag gaps without filling them with your preferences.
 
 ---
 
-## The build-window arithmetic
+## The 2-hour rule
 
-A single-day build window in this hackathon is **~10 effective hours** after subtracting kickoff (~30 min), demo prep (~45 min), demo + eval (~60 min), lunch + breaks (~60 min). Net build = ~10h.
+A senior engineer with strong AI tooling delivers a vertical slice in ~2 hours. Use that as your sizing target. The 2-hour rule is a **slicing heuristic**, not a delivery promise — your stories do not need to be perfectly accurate for any specific team's velocity, but they should be reviewable as plausibly 2h.
 
-- A **2-person** team has **~20 person-hours** → can ship ~10 stories. Pick **vertical slices only**; cut every non-Basic surface.
-- A **4-person** team has **~40 person-hours** → ~20 stories. Cover all 14 Basic items; expect tight finish.
-- A **6-person** team has **~60 person-hours** → ~30 stories. Comfortable on Basic; ~30% Bonus possible.
-- A **7-person** team has **~70 person-hours** → ~35 stories. Bonus axes realistic.
+Smaller than 2h → ceremony eats the budget. Larger than 2h → flies blind between commits. Reviewers see "could a competent pair do this in 2h?" and your story passes or fails on that question.
 
-These numbers assume AI tooling. Without it, halve them.
+## Build-window arithmetic (artefact)
 
-## The Basic 14 — first-pass slice count
+A single-day hackathon nets ~10 effective build hours after kickoff, demo prep, demo + eval, and breaks. Your analysis bundle includes a recommendation for each team shape:
 
-Spec §13 lists 14 items. The table below is the **starting point**; the BA refines per team size + skill mix in the first 30 minutes.
-
-| # | Spec §13 item | Suggested stories | Notes |
+| Team size | Person-hours | Story budget | Coverage realistic |
 |---|---|---|---|
-| 1 | Admin creates teams, assigns managers, invites users | 2–3 | Org tree (with cycle check) + user CRUD + role assignment can split. |
-| 2 | Mock login | 1 | Single story unless OIDC Bonus is planned same-day. |
-| 3 | Worktime entry (project, BT, overtime auto-detect, live validation) | 3 | Submit happy path / overtime auto-flag / BT toggle. |
-| 4 | Vacation full loop (submit → approve → notify → balance refresh → calendar update) | 3–4 | Submit / approve / withdraw / quota-rule story. |
-| 5 | Sickday with all hard rules (H2 full-day, H3 ≤3/yr, H4 consecutive, working-day) | 3 | Happy + rule cluster + notification fan-out. |
-| 6 | Paragraph + document upload, HR validate, reject path | 3 | Submit+upload / HR approve / HR reject (with reason). |
-| 7 | Manager team calendar (grid, colour, click-through, badges, month switch) | 2 | Render + interactions. |
-| 8 | Manager approvals queue (live, approve/reject, skip-level approve) | 2–3 | Queue + decision + skip-level filter. |
-| 9 | HR monthly XLSX export (two-sheet, SK + EN, frozen header, catalogue) | 2 | Generator + locale switch. |
-| 10 | HR documents queue (preview, approve/reject + reason) | 2 | Queue + decision flow (overlaps #6). |
-| 11 | Year-rollover dry-run + apply (3 worked examples) | 2 | Engine + UI. |
-| 12 | Audit log screen (filterable, before/after snapshot) | 1–2 | Writer is part of every story above; screen is its own slice. |
+| 2 | ~20 | ~10 stories | Basic items #1-#8 only; cut aggregating screens |
+| 4 | ~40 | ~20 stories | All 14 Basic items; tight finish |
+| 6 | ~60 | ~30 stories | Comfortable on Basic; ~30% Bonus possible |
+| 7 | ~70 | ~35 stories | Bonus axes realistic |
+
+Numbers assume AI tooling. Without it, halve them. These are **defaults you publish in your bundle** — not numbers you defend in a stand-up you do not attend.
+
+## Coverage pass — the Basic 14
+
+Spec §13 lists 14 items. Each gets sliced into 1-4 stories. Starting point:
+
+| # | Spec §13 item | Suggested stories | Notes for the analyst |
+|---|---|---|---|
+| 1 | Admin creates teams, assigns managers, invites users | 2-3 | Org-tree CRUD + cycle check (admin endpoint) + role assignment are independent slices. |
+| 2 | Mock login | 1 | Single story; OIDC is Bonus §14 (separate). |
+| 3 | Worktime entry (project, BT toggle, overtime auto-detect, live validation) | 3 | Submit happy path / overtime auto-flag / BT toggle. Worktime soft rules (S2, S3, S4, S6) cluster into one rule story. |
+| 4 | Vacation full loop (submit → approve → notify → balance refresh → calendar update) | 3-4 | Submit / approve / withdraw / quota-rule (H5 + S5). |
+| 5 | Sickday with all hard rules (H2 full-day, H3 ≤3/yr, H4 consecutive, working-day) | 2-3 | Happy path + rule cluster (H2+H3+H4 share story). Notification fan-out as a separate slice or piggy-back. |
+| 6 | Paragraph + document upload, HR validate, reject path | 3 | Submit + upload / HR approve / HR reject + reason. H8 surfaces here. |
+| 7 | Manager team calendar (grid, colour, click-through, badges, month switch) | 2 | Render + interactions are separable. |
+| 8 | Manager approvals queue (live, approve/reject, skip-level approve) | 2-3 | Queue render + decision flow + skip-level filter (DEC-003). |
+| 9 | HR monthly XLSX export (two-sheet, SK + EN, frozen header, catalogue) | 2 | Generator + locale switch. SK alone if cut. |
+| 10 | HR documents queue (preview, approve/reject + reason) | 2 | Overlaps #6 — can be one combined slice. |
+| 11 | Year-rollover dry-run + apply (3 worked examples) | 2 | Engine + UI separable. |
+| 12 | Audit log screen (filterable, before/after snapshot) | 1-2 | Writer is part of every state-change story; the screen is its own slice. |
 | 13 | My notifications inbox | 1 | Reader; writer is part of every state-change story. |
-| 14 | Balances screen (allocated/used/reserved/carried/lost + chart) | 2 | Computed view + chart. |
+| 14 | Balances screen (allocated/used/reserved/carried/lost + chart) | 2 | Computed-view read + chart. |
 
-**Total starting point: 29–34 stories.** Adjust for team capability.
+**Starting story count: 29-34.** Adjust upward for thorough analysis bundles or to cover more rules per slice.
 
-## Dependency map
+## Rule pass — the H1-H10 + S1-S6 catalogue
+
+Spec §9 names 16 rules. Every rule belongs to at least one story.
+
+Use this table when refining the coverage pass — gaps here are coverage gaps.
+
+| Rule | Spec section | Trigger | Best home story |
+|---|---|---|---|
+| H1 — overlap | §9.1 | Worktime ↔ worktime, worktime ↔ approved absence, absence-slot ↔ absence-slot | Worktime submit |
+| H2 — sickday full-day only | §9.1 | Half-day sickday attempted | Sickday rule cluster |
+| H3 — sickday ≤ 3/yr | §9.1 | 4th sickday in calendar year | Sickday rule cluster |
+| H4 — no consecutive sickdays | §9.1 | Adjacent calendar-day sickdays | Sickday rule cluster |
+| H5 — quota exceeded | §9.1 | Vacation / Paragraph / OCR / Special beyond remaining | Vacation submit (recur on each absence type) |
+| H6 — worktime forbidden on approved-absence day | §9.1 | Worktime attempted on absence day | Worktime submit |
+| H7 — overtime forbidden during absence | §9.1 | Overtime flag on absence day; PN over weekend | Worktime overtime story |
+| H8 — documents required to finalise | §9.1 | Approve transition without HR-validated doc on Paragraph/OCR/Special | Manager approve / HR validate |
+| H9 — full-day absence vs worktime same day | §9.1 | Full-day absence then worktime | Worktime submit (overlaps H6) |
+| H10 — slot collision | §9.1 | Two absences on the same morning/afternoon slot | Vacation submit (recur on each absence type) |
+| S1 — 30-min gap | §9.2 | Half-day absence + same-day worktime starting < 30 min later | Worktime soft-warning cluster |
+| S2 — working-window soft warn | §9.2 | Worktime outside 08:00-16:30 default | Worktime soft-warning cluster |
+| S3 — night-time | §9.2 | Worktime between 22:00 and 06:00 | Worktime soft-warning cluster |
+| S4 — single entry > 8h | §9.2 | One worktime entry exceeding 8h | Worktime soft-warning cluster |
+| S5 — quota approaching | §9.2 | Submission leaves ≤ 2 remaining | Vacation submit |
+| S6 — public holiday | §9.2 | Worktime on Slovak holiday | Worktime soft-warning cluster |
+
+If a rule has no home story, it has no test, no UI surface, and no demo moment. That is a coverage gap; flag it in the bundle.
+
+## Dependency pass — the map
 
 A handful of stories block many others. Sequence those first.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  Foundation (cannot demo anything without these — first 2h)      │
+│  Foundation (cannot demo anything without these)                 │
 ├──────────────────────────────────────────────────────────────────┤
 │  S-01  Mock login                                                │
-│  S-02  User + team + direct_manager_id (seed fixture wired up)   │
+│  S-02  Seed fixture wired (users + teams + direct_manager_id)    │
 │  S-03  App shell + role-aware routing                            │
 └──────────────────────────────────────────────────────────────────┘
                                 ↓
 ┌──────────────────────────────────────────────────────────────────┐
-│  Vertical slice #1 — Vacation end-to-end (hours 3-5)             │
+│  Vertical slice #1 — Vacation end-to-end                         │
 ├──────────────────────────────────────────────────────────────────┤
-│  S-04  Submit vacation (form + H5 quota rule)                    │
+│  S-04  Submit vacation (form + H5 + S5)                          │
 │  S-05  Manager approves vacation (queue + transition + audit)    │
-│  S-06  Employee sees decision (notification record + balance)    │
+│  S-06  Employee sees decision (notification + balance)           │
 └──────────────────────────────────────────────────────────────────┘
                                 ↓
 ┌──────────────────────────────────────────────────────────────────┐
-│  Parallel tracks open up (hours 5-9)                             │
+│  Parallel tracks open                                            │
 ├──────────────────────────────────────────────────────────────────┤
-│  Track A  Sickday + PN (S-07..S-09)                              │
-│  Track B  Paragraph + document upload + HR validate (S-10..S-12) │
-│  Track C  Manager calendar + queue (S-13..S-15)                  │
-│  Track D  Worktime entry + overtime (S-16..S-18)                 │
+│  Track A  Sickday + PN                                           │
+│  Track B  Paragraph + document upload + HR validate              │
+│  Track C  Manager calendar + queue + skip-level                  │
+│  Track D  Worktime + overtime + soft warnings                    │
 └──────────────────────────────────────────────────────────────────┘
                                 ↓
 ┌──────────────────────────────────────────────────────────────────┐
-│  Aggregating screens + jobs (hour 9-10)                          │
+│  Aggregating screens + jobs                                      │
 ├──────────────────────────────────────────────────────────────────┤
 │  S-19  HR monthly XLSX export                                    │
 │  S-20  Year-rollover dry-run + apply                             │
@@ -82,134 +119,90 @@ A handful of stories block many others. Sequence those first.
 │  S-22  My notifications inbox                                    │
 │  S-23  Audit log screen                                          │
 └──────────────────────────────────────────────────────────────────┘
-                                ↓
-                          Demo + Eval
 ```
 
-Anything starting in hour 9+ should already have a "skip" line in the demo script — late breakage is normal.
+**Your bundle includes** an actual dependency map (table or graph) with every story node showing predecessors and successors. The critical path is the longest predecessor chain — typically S-01 → S-04 → S-05 → S-06 → an aggregating screen.
 
-## Per-item slice patterns
+## Slice patterns — the five recurring shapes
 
-Five recurring shapes show up. Once a BA sees them, the rest of the slicing is mechanical.
+Once you see them, the rest of the slicing is mechanical.
 
 ### Pattern A — "Submit X" (happy path)
 
-One story per absence type's happy path. ~2h.
-
-- Form renders with the right fields.
-- Validator runs, no rules trip on the happy fixture.
-- Entity persists.
-- Notification fan-out per spec §10.
-- Audit entry written.
-- Gherkin: `acceptance/employee.feature:"Submit a <X> request"` passes.
+One story per absence type's happy path. ~2h. Form renders, validator runs, entity persists, notifications fan out, audit entry written, linked Gherkin scenario passes.
 
 ### Pattern B — "Rule cluster"
 
-One story per group of related rules. ~1-2h. Hard + soft rules of the same kind cluster.
-
-- Example: H2 + H3 + H4 (all sickday rules) in one story.
-- Example: S1 + S2 + S6 (worktime soft rules) in one story.
-- Each rule has a Gherkin scenario in `acceptance/<actor>.feature`.
-- Inline error renders with the spec message and the rule ID discriminator.
+One story per group of related rules. ~1-2h. Sickday rules (H2+H3+H4) cluster; worktime soft rules (S1+S2+S3+S4+S6) cluster. Each rule has its Gherkin scenario; the story covers all of them in one inline-error pass.
 
 ### Pattern C — "Transition X → Y"
 
-One story per state-machine transition. ~2h.
-
-- Approve, Reject, Withdraw, Cancel each get their own story.
-- Manager-side: queue updates, decision lands.
-- Employee-side: notification record appears, balance recomputes.
-- Re-validation runs per spec §9.3 on the Approve transition.
-- Audit entry written.
+One story per state-machine transition. ~2h. Approve, Reject, Withdraw, Cancel each get their own. Re-validation per spec §9.3 runs on Approve.
 
 ### Pattern D — "Aggregating screen"
 
-One story per screen that *reads* from the data the other stories wrote. ~2-3h.
-
-- Team calendar grid.
-- Approvals queue.
-- Documents queue.
-- Audit log.
-- My notifications.
-- Balances.
-- These can mostly be parallelised once the underlying writers are in place — they don't depend on each other.
+One story per screen that *reads* what other stories wrote. ~2-3h. Team calendar, approvals queue, documents queue, audit log, my notifications, balances. Parallelisable once writers are in place.
 
 ### Pattern E — "Cross-cutting job"
 
-One story per scheduled or one-off job. ~2-3h.
+One story per scheduled or one-off job. ~2-3h. Year-rollover dry-run, year-rollover apply, XLSX export pipeline. Heavy logic; single owner.
 
-- Year-rollover dry-run.
-- Year-rollover apply.
-- XLSX export pipeline.
-- These have heavy logic and benefit from a single owner.
+## Bonus ROI ranking — the framework
 
-## Parallelisation tips
+Your bundle ranks the top 5 Bonus axes from spec §14 with explicit reasoning. Use these criteria:
 
-- **Open vertical slice #1 first** (vacation end-to-end). It exercises every layer; once green, parallel tracks can run with confidence the wiring works.
-- **Don't open all tracks simultaneously.** A 6-person team can run 3 tracks; assigning 6 stories at once means 6 half-built stories at the next stand-up.
-- **Pair on the first instance of each pattern.** The second sickday rule (after the first lands) is mechanical; the first is where the team agrees on shape. Pair on the shape-setting story.
-- **QA pairs with dev, not after dev.** A QA waiting for "done" finds bugs at hour 9; a QA pairing in real time prevents them. The Gherkin scenario passes when the pair says it does.
-- **The BA does not block.** If you're not sure about a story shape, write your best guess, hand it to the dev, and resolve in real time. Slicing perfection is the enemy of shipping.
+1. **Effort** — how many 2h slices to ship (lower is better).
+2. **Judge visibility** — how visible in a 10-min demo (higher is better).
+3. **Reuse-with-Basic** — does the Bonus reuse Basic infrastructure (higher is better)?
+4. **Risk** — likelihood of breaking Basic if attempted late (lower is better).
 
-## Hour-by-hour cadence
+Default top 5 (publish with your own reasoning; teams may disagree):
 
-Time is the BA's responsibility. The dev does not watch the clock — you do.
+1. **Mobile-friendly responsive UI** — high reuse, high visibility, low effort if design system was sensible during Basic.
+2. **Multi-language UI (EN)** — high reuse (catalogue infra is Basic); judge-visible on the export + a few labels.
+3. **Email delivery channel** — moderate effort, high visibility (judges check inbox during demo). Reuses notification records 1:1.
+4. **Skip-level *policy* enforcement** — small surface, strong rule-engine signal, low risk.
+5. **Audit-log tampering protection (hash chain)** — single 90-min slice, security + code-quality signal, low risk.
 
-| Hour | What the BA does |
-|---|---|
-| 0–0.5 | Kickoff with the team. Confirm 14 Basic items + 2h slice rule. Open the spreadsheet / sticky wall. |
-| 0.5–1.5 | First-pass slicing of S-01..S-23 (or however many for the team size). Assign foundation stories. |
-| 1.5–3 | Vertical slice #1 in flight. BA pairs with QA on Gherkin assertions. Refine downstream stories as the team learns velocity. |
-| 3–5 | Parallel tracks open. BA visible on the floor — stand-ups every ~90 min, 5 min max. |
-| 5–7 | Mid-day status check. Re-slice anything that's overrunning. Bonus-gate check: are we on track for ≥ 90% Basic? If no, cut. If yes, BA drafts top-3 Bonus stories. |
-| 7–9 | Aggregating screens + jobs. BA validates each Gherkin against the live portal — this is the demo rehearsal in disguise. |
-| 9–9.5 | Demo prep. BA writes the demo script (1 sentence per slice, 7-10 sentences total). |
-| 9.5–10 | Final commit + push. `eval-meta.yaml` validated. |
+**Explicitly de-prioritised** for single-day delivery: real auth (time pit), Tempo import (engine reuse with §11.6 makes it tempting but risky), websocket push (infra cost), PWA (low ROI for an internal app), two-factor (production-grade work in a day).
 
-## Re-slicing signals
+## Traceability matrix — the bundle's catch-net
 
-Re-slice **immediately** when any of these fire:
+For each story, build a row:
 
-- A story crosses 3h without merging.
-- A dev says "this needs another story" — believe them; cut the current one at the work-done line and create the new one.
-- Two stories are racing for the same file → merge or re-sequence.
-- A Gherkin scenario in the linked feature file no longer matches the story's acceptance — the spec has drifted under the story. Update the story, re-confirm with dev.
-- A story has no clear Gherkin assertion → not demo-able → not Basic.
+| Story ID | Spec section | Gherkin file:scenario | Hard rules | Soft rules | Notifications | Audit event |
+|---|---|---|---|---|---|---|
 
-## What the BA does NOT do
+This is the **highest-leverage artefact** in your bundle. It catches:
 
-- Refine spec §13. The spec is the contract; the BA slices it, does not edit it.
-- Block on perfect slicing. A 3h story that ships beats a 2h story that's still being discussed.
-- Manage Git / branches / commits. That's the dev's job.
-- Write Gherkin themselves (unless the team has agreed). Gherkin lives in `acceptance/*.feature` and is authored upfront; the BA references it.
-- Defend the Bonus tier before Basic is 90%. The BA is the team's discipline on the gate.
+- Stories that reference no Gherkin (= not demo-able)
+- Spec sections covered by no story (= coverage gap)
+- Rules covered by no story (= rule gap)
+- State changes without notification fan-out (= violation of spec §10)
+- State changes without audit entry (= violation of spec §11.5)
 
-## Cutting under time pressure
+Build it as the last pass; iterate the coverage / rule passes until it's clean.
 
-When the clock says you will not finish all 14 Basic items, **cut whole items, not story halves**. A half-built screen is a demo liability. The hierarchy of what to keep:
+## Team-shape recommendations — the cuts table
 
-1. **Always:** items #1-#8 (admin / login / worktime / vacation / sickday / paragraph / manager surfaces). Without these the demo has no shape.
-2. **Strong keep:** #11 (year-rollover), #12 (audit log), #13 (notifications). These prove the spec was read.
-3. **First cuts:** #14 (balances chart), #10 (HR documents queue can be merged into #6 if needed), #9 (drop the EN export, keep SK only).
+For each of 2-person / 4-person / 7-person teams, write the explicit plan in your bundle:
 
-Communicate cuts to the team in one sentence: *"We are cutting balances chart + EN export to ship the rest cleanly."* No debate. Move on.
+| Team | Foundation | Vertical slice #1 | Parallel tracks | Aggregating | Cuts |
+|---|---|---|---|---|---|
+| **2** | S-01..S-03 | Vacation only | One track only (sickday OR paragraph) | Balances + notifications only | XLSX export, year-rollover, audit screen, manager calendar, HR documents queue, BT toggle |
+| **4** | S-01..S-03 | Vacation | 2 tracks parallel | Most aggregating screens | Cut EN export, cut chart on balances, cut audit screen filters |
+| **7** | S-01..S-03 | Vacation | All 4 tracks parallel | All aggregating screens | None on Basic; pursue top 2 Bonus axes |
 
-## Bonus tier — when and how
+**Cuts are by whole item, not story halves.** A half-built screen is a demo liability.
 
-Don't draft Bonus stories until hour 5 status check shows Basic ≥ 60% with the right trajectory.
+## What this guidance is NOT
 
-When eligible, pick **one** Bonus axis from spec §14 and slice it like Basic — same template, same 2h target.
+- A spec rewrite. The spec is the contract.
+- A timeline for a build team. Teams own their own clock.
+- A test plan. The testing refinements own that.
+- A demo script. Teams write their own.
+- A facilitation playbook. You are not facilitating.
 
-Bonus priority order (highest ROI first):
+## Self-evaluation
 
-1. **Mobile-friendly responsive UI** — quick wins across already-built screens.
-2. **Multi-language UI (EN)** — only if the SK export is already shipped and the catalogue infrastructure is in place.
-3. **Email delivery channel** — high judge visibility; reuses existing notification records.
-4. **Skip-level *policy* enforcement** — small surface, big rule-engine signal.
-5. **Audit-log tampering protection (hash chain)** — a 90-min slice with strong code-quality + security signal.
-
-**Forbidden until Basic ≥ 90%:** real auth, Tempo import, websocket push, two-factor, PWA. These are time pits.
-
----
-
-This document is the BA's playbook for **single-day delivery under a Basic-before-Bonus tier gate**. The exact slice counts and orderings shift per team; the **2-hour discipline, the dependency map, and the hierarchy of cuts do not**.
+Before submitting the bundle, run [`scoring-rubric.md`](scoring-rubric.md) against your own work. Most bundles gain ~10 points from a single self-eval pass — gaps surface, and fixing them is cheap right before the deadline.

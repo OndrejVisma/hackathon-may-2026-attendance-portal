@@ -1,15 +1,15 @@
 # Story Template — Hackathon Attendance Portal
 
-**Audience:** Business Analyst on a hackathon team.
-**Purpose:** Cut the §13 Basic acceptance set into stories small enough that a dev + QA pair (with AI tooling) can finish one in ~2 hours.
-**Companion:** [`slicing-guidance.md`](slicing-guidance.md) — the dependency map + the per-item slice breakdown.
+**Audience:** Business Analyst at the hackathon, producing the analysis bundle.
+**Purpose:** Per-story shape; use as a fill-in template for every story in the bundle.
+**Companion:** [`slicing-guidance.md`](slicing-guidance.md) for the playbook; [`scoring-rubric.md`](scoring-rubric.md) for how the bundle is judged.
 **Date:** 2026-05-12
 
-> **Principle.** Stories are a *coordination tool*, not a deliverable. The Gherkin scenarios in [`../acceptance/`](../acceptance/) are the contract; this template helps the team agree on slice size and ordering, not on documentation depth.
+> **The spec is the contract.** Each story slices [`../product-spec.md`](../product-spec.md) — never invents new requirements. Anything the spec leaves undefined is the build team's discretion and is not judged.
 
 ---
 
-## What a hackathon story looks like
+## The template
 
 ```
 ID:     S-NN  (S-01, S-02, …; assigned in slicing order)
@@ -33,12 +33,11 @@ Acceptance:
 Depends on:  <S-XX, S-YY>     # previous stories that must merge first
 Blocks:       <S-XX>          # downstream stories waiting on this one
 
-Owner:   <dev>
-Pair:    <qa>
-Demo cue: "<one sentence the demo presenter will say>"
+Demo cue: "<one sentence the demo presenter could say>"
+Notes:    <optional, ≤ 2 lines — judges read these; brevity scores>
 ```
 
-**Keep it on one screen.** If your story page scrolls, you're writing a specification document. Stop. Link to the spec, link to the Gherkin, leave the rest.
+**Keep it on one screen.** A scrolling story is a specification document. Stop. Link to the spec, link to the Gherkin, leave the rest.
 
 ---
 
@@ -68,9 +67,8 @@ Acceptance:
 Depends on:  S-01 (mock login), S-02 (user has team + direct_manager_id)
 Blocks:      S-05 (manager approve), S-09 (calendar reflects)
 
-Owner:   Marek
-Pair:    Lenka
 Demo cue: "Anna submits a 3-day vacation; it lands on Tomáš's queue within 30 seconds."
+Notes: Live balance badge per FE refinement §13 surfaces here.
 ```
 
 ## Worked example 2 — Basic, rule-only slice
@@ -97,12 +95,11 @@ Acceptance:
 Depends on:  S-04a (sickday submit happy path)
 Blocks:      none
 
-Owner:   Marek
-Pair:    Lenka
 Demo cue: "Anna tries sickday today after yesterday's sickday — block + 'use PN' hint."
+Notes: Error must contain rule ID 'H4' as discriminator (per FE testing §5).
 ```
 
-## Worked example 3 — Bonus, off-by-default
+## Worked example 3 — Bonus, gated
 
 ```
 ID:    S-B-03
@@ -125,43 +122,45 @@ Acceptance:
 Depends on:  S-13 (in-portal notification feed working — Basic gate)
 Blocks:      S-B-04 (Slack channel reuses dispatcher)
 
-Owner:   <only assigned if Basic gate ≥ 90% — check first>
+Demo cue: "Approve → MailHog shows the email within 5 seconds."
+Notes: Gated — recommend only when team is on track for Basic ≥ 90%.
 ```
 
 ---
 
 ## Slicing rules
 
-1. **2-hour target.** If you can't see how a senior + AI finishes the slice in 2h, split it. Carve along rule boundaries (one hard rule per story), state-machine transitions (Submit → Approve as two stories), or persona surface (Employee submit vs Manager approve).
-2. **One Gherkin scenario minimum per story.** Zero means there is nothing to demo; that's a refactor task, not a story.
-3. **Vertical slices beat horizontal layers.** "Submit vacation end-to-end" beats "build absence DB schema". A demo-able slice every 2h keeps the team honest.
-4. **Hard rule + happy path can be one story.** "Submit vacation with H5 quota check" is fine. Two slices only if the happy path itself is heavy.
-5. **No story without a `Demo cue`.** If you can't name what the presenter will say, the story isn't shaped for hackathon delivery.
-6. **Notification + audit are part of the story, not separate.** A story that "submits a vacation" without also writing audit + notification is incomplete per spec §10 + §11.5.
-7. **Withdraw / cancel paths are their own stories.** They share the form but trigger different state transitions and notification fan-outs.
-8. **Bonus stories carry a Basic-gate check in the Owner line.** Nobody is assigned to Bonus until the team's Basic count hits 90%.
+1. **2-hour target.** If you cannot see how a senior + AI pair finishes the slice in ~2h, split it. Carve along rule boundaries (one hard rule per story), state-machine transitions (Submit → Approve as two stories), or persona surface (Employee submit vs Manager approve).
+2. **One Gherkin scenario minimum.** Zero means there is nothing to demo; that is not a story, it is a refactor task.
+3. **Vertical slices beat horizontal layers.** "Submit vacation end-to-end" beats "build absence DB schema". Stay demo-able.
+4. **Hard rule + happy path can be one story.** "Submit vacation with H5 check" is fine. Split only if the happy path itself is heavy.
+5. **No story without a Demo cue.** If you cannot name what a presenter would say, the story is not shaped for hackathon delivery.
+6. **Notification + audit are part of the story.** A "submit vacation" story that omits audit + notification fan-out is incomplete per spec §10 + §11.5.
+7. **Withdraw / cancel are their own stories.** They share the form but trigger different transitions and notification fan-outs.
+8. **Bonus stories carry a gate note.** Annotate every Bonus story with "Recommend only after Basic ≥ 90%" — your bundle is honest about sequencing.
+9. **Do not invent requirements.** If the spec is silent, leave the story silent. Document the gap in your bundle's "open questions" list (if you keep one); do not pre-resolve it.
 
 ## Definition of Done — per story
 
-A story is done when **all** of these are true:
+A story is considered "done" when a team that uses it could say all of these are true. You do not enforce this — you describe it.
 
-- [ ] Linked Gherkin scenario(s) pass (manual run + automated where the harness exists).
-- [ ] Hard rule(s) named in the story actually trip with the spec §9.1 message.
+- [ ] Linked Gherkin scenario(s) pass.
+- [ ] Hard rule(s) named in the story trip with the spec §9.1 message.
 - [ ] Notification record(s) and audit entry written (or "none" was declared upfront).
 - [ ] Demo cue rehearsed once against a real running portal.
-- [ ] No `TODO` / `FIXME` left without a follow-up story.
 - [ ] Code merged into the branch the eval-runner will clone at demo time.
 
 ## What this template is NOT
 
-- A user-research artefact. Hackathon stories assume the personas are settled (spec §3); no discovery loop.
-- A backlog-grooming tool. The full backlog is §13's 14 items; you slice those into stories, not generate new requirements.
-- A signing-off mechanism. The BA does not gate developer flow — the Gherkin scenario is the gate.
-- A test-case repository. Acceptance criteria point at Gherkin; do not duplicate the Given/When/Then in the story body.
+- A user-research artefact. Personas are settled (spec §3); no discovery loop.
+- A backlog-grooming ritual. You produce, you do not facilitate.
+- A signing-off mechanism. The Gherkin scenario is the gate, not the BA.
+- A test-case repository. Acceptance references Gherkin; do not duplicate Given/When/Then in the story body.
+- A coordination tool. Owner / Pair fields removed by design — teams own their own assignment.
 
 ## Tool tips
 
-- **Index in a spreadsheet** (Google Sheets, Notion, even a CSV in the repo). Columns: ID, Title, Tier, Size, Depends-on, Owner, Status. One row per story. Status: `todo / in-progress / blocked / done`.
-- **Sticky-note wall** if the team is in one room. Each sticky = one story. Move physically as status changes. Beats any tool.
-- **AI-assist for drafting.** Paste the spec §13 item into Claude with this template; ask "split into 2h hackathon stories". Review + adjust. The dev / QA pair owns the final shape, not the AI.
-- **Cluster by acceptance feature file.** Stories that touch `employee.feature` mostly co-evolve; same with `manager.feature`, `hr.feature`. Useful when assigning ownership.
+- **Index in a spreadsheet or table.** Columns: `ID | Title | Tier | Size | Depends-on | Blocks | Demo cue`. The bundle ships this index as a CSV / Markdown table alongside the per-story files.
+- **One file per story** under `stories/S-NN.md` is reviewer-friendly; one big file is also acceptable if the bundle is small.
+- **AI-assist for drafting.** Paste the spec §13 item into Claude with this template; ask "split into 2h hackathon stories". Review + adjust. Show the prompt in the bundle — visible AI direction earns Polish points (per [`scoring-rubric.md`](scoring-rubric.md)).
+- **Cluster by acceptance feature file.** Stories touching `employee.feature` co-evolve; same for `manager.feature`, `hr.feature`. Useful when judges scan for coverage.
