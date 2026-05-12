@@ -1,6 +1,6 @@
 # Attendance Portal — Functional Refinement
 
-**Status:** Hackathon brief — 12-hour build window, team sizes 2–7, **senior engineers with strong AI tooling** (Claude Code / Cursor / equivalents). Scope is ambitious by design; teams are expected to ship a polished demoable application, not a sketch.
+**Status:** Hackathon brief — single-day build window, team sizes 2–7, **senior engineers with strong AI tooling** (Claude Code / Cursor / equivalents). Scope is ambitious by design; teams are expected to ship a polished demoable application, not a sketch.
 **Audience:** Hackathon teams. Read this as the source of truth for *what* the portal does. Each team picks their own implementation stack.
 **Date:** 2026-05-06 (source); revised 2026-05-09 to apply DEC-003..006 from `../decisions.md`.
 
@@ -563,7 +563,7 @@ Off-limits until every Basic scenario passes. Judges enforce the gate.
 - **Audit-log tampering protection** — append-only table with a hash chain (each row's hash includes the previous row's hash). Detects retroactive edits of audit entries.
 - **UX polish axes** (§17.2) — live balance badge, side-panel calendar drill-in, keyboard shortcut, designed empty states, skeleton loaders, in-progress data preservation. Each axis can be picked up independently; collectively they sharpen demo quality without affecting correctness.
 
-## 15. Out of scope (do not attempt in 12 h, even with AI)
+## 15. Out of scope (do not attempt in a single day, even with AI)
 
 - Migration of *production* historical Tempo data with full data integrity. (The §14 Bonus axis "Tempo XLSX import" is a sandbox version — drop a file, see the diff, optionally commit. Out-of-scope here is the harder problem: real-data validation, dedup against existing entries, conflict resolution, and a rollback path.)
 - Multi-tenant SaaS architecture.

@@ -5,7 +5,7 @@ Welcome. This folder is the **single source of truth** for what you are building
 ## TL;DR
 
 - **Build:** a self-contained web app that owns the company's attendance lifecycle (worktime, absences, approvals, quotas, reports). See [`product-spec.md`](product-spec.md).
-- **Time:** 12 hours, in-person, single day.
+- **Time:** in-person, single day.
 - **Team size:** 2–7. Senior engineers with AI tooling expected.
 - **Stack:** your choice. No starter code. Fixtures are stack-agnostic data only.
 - **LLM access:** bring your own Premium Claude seat (Pro or Max). No organiser budget.
@@ -52,7 +52,7 @@ If the eval-runner sees you started a Bonus axis with Basic incomplete, you forf
 | [`dev-extras/integration/email-stub.md`](dev-extras/integration/email-stub.md) *(TBD)* | dev | Recommended local SMTP capture (MailHog / Mailpit). |
 | [`dev-extras/integration/fixtures/`](dev-extras/integration/fixtures/) *(TBD)* | dev + QA | Users, teams, holidays, quotas, in-flight absences, sample docs. |
 | [`dev-extras/nfr/performance.yaml`](dev-extras/nfr/performance.yaml) *(TBD)* | dev | Latency + calendar grid render targets. |
-| [`dev-extras/nfr/time-budget.yaml`](dev-extras/nfr/time-budget.yaml) *(TBD)* | dev | 12h cap + per-phase guidance. |
+| [`dev-extras/nfr/time-budget.yaml`](dev-extras/nfr/time-budget.yaml) *(TBD)* | dev | Build-window cap + per-phase guidance. |
 | [`dev-extras/frontend/fe-technical-refinement.md`](dev-extras/frontend/fe-technical-refinement.md) | frontend dev | FE technical refinement — 38 sections framework-agnostic (responsive, PWA, a11y WCAG 2.2 AA, theming, i18n, real-time, auth, file upload, perf budgets, design system, state, forms, security, testing, build/eval-runner, code architecture, DI, TZ handling, API contract, etc.) with Basic / Bonus tier mapping per DEC-004. |
 | [`dev-extras/role-quickstarts/`](dev-extras/role-quickstarts/) *(TBD)* | dev / QA | Per-role 5-min entry: backend dev/QA, frontend dev/QA. |
 
@@ -75,7 +75,7 @@ Don't read everything. Pick your role, follow the quickstart.
 2. **Acceptance Gherkin is the contract.** If a scenario passes, the feature is done. If not, it isn't.
 3. **Fixtures are canonical.** Use the data in `dev-extras/integration/fixtures/`. Don't invent your own users, holidays, or year-rollover scenarios — judges replay against the same fixtures.
 4. **Mock auth is fine for Basic.** Don't burn 60 minutes on OIDC before the rule engine works.
-5. **Premium Claude seat per person.** Pro caps reset every 5h (3 cycles in 12h). Reserve Opus for hard problems; Sonnet 4.6 covers most workload.
+5. **Premium Claude seat per person.** Pro caps reset every 5h. Reserve Opus for hard problems; Sonnet 4.6 covers most workload.
 6. **In-product AI features need your own API key.** Pro/Max seats cover Claude Code dev-time. They do **not** authenticate runtime API calls from the portal.
 7. **Commit often, push often.** Eval-runner pulls your repo at demo time.
 8. **At demo time, ship `eval-meta.yaml`.** Declares stack ids, `make eval` entrypoint, high-risk paths. Without it your submission can't be eval'd → you forfeit deterministic + AI eval points.

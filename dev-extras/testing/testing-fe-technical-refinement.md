@@ -1,6 +1,6 @@
 # Attendance Portal — Frontend Testing Technical Refinement
 
-**Status:** Hackathon brief — 12-hour build window, team sizes 2-7, senior engineers with strong AI tooling.
+**Status:** Hackathon brief — single-day build window, team sizes 2-7, senior engineers with strong AI tooling.
 **Scope:** Frontend end-to-end testing only. Framework-agnostic technical requirements. Teams pick the actual stack (Playwright, Cypress, WebdriverIO, Selenium, TestCafe, Puppeteer, Nightwatch, …) and the UI framework underneath (React / Vue / Svelte / Angular / Solid / …).
 **Companion docs (canonical):**
 - `hackathon-may-2026-attendance-portal/product-spec.md` — *read first.* Source of truth for product behaviour.

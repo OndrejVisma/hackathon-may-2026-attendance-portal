@@ -1,6 +1,6 @@
 # Attendance Portal — Frontend Technical Refinement
 
-**Status:** Hackathon brief — 12-hour build window, team sizes 2-7, senior engineers with strong AI tooling.
+**Status:** Hackathon brief — single-day build window, team sizes 2-7, senior engineers with strong AI tooling.
 **Scope:** Frontend only. Framework-agnostic technical requirements. Teams pick the actual stack (React / Vue / Svelte / Angular / Solid / etc.).
 **Companion doc (canonical):** `hackathon-may-2026-attendance-portal/product-spec.md` — read first. This FE doc layers on top of the product spec and inherits the Basic / Bonus tier model (DEC-004) + judging rubric (DEC-007).
 **Date:** 2026-05-11
@@ -210,7 +210,7 @@ Targets measured at the 75th percentile on a mid-range mobile device on simulate
 
 ## 11. Design system + tokens
 
-Teams must adopt one of these three patterns. Building every atom from scratch is **forbidden** — accessibility is too hard to get right alone within a 12-hour window.
+Teams must adopt one of these three patterns. Building every atom from scratch is **forbidden** — accessibility is too hard to get right alone within a single-day window.
 
 - **Option A.** Headless component library (Radix / Headless UI / Ariakit or framework-equivalent) + custom styling.
 - **Option B.** Styled component library (MUI / Mantine / Ant / Chakra or equivalent) that supports tokens + dark mode out of the box.

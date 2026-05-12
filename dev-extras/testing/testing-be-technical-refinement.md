@@ -1,6 +1,6 @@
 # Attendance Portal — Backend Testing Technical Refinement
 
-**Status:** Hackathon brief — 12-hour build window, team sizes 2-7, senior engineers with strong AI tooling.
+**Status:** Hackathon brief — single-day build window, team sizes 2-7, senior engineers with strong AI tooling.
 **Scope:** Backend testing only. Framework-agnostic technical requirements. Teams pick the actual stack (Node + Vitest / Jest / Mocha, Python + pytest, Go + `testing` + testify, Java/Kotlin + JUnit, C# + xUnit, Rust + `cargo test`, Ruby + RSpec, …).
 **Companion docs (canonical):**
 - `hackathon-may-2026-attendance-portal/product-spec.md` — *read first.* Source of truth for product behaviour, hard/soft rules, state machine, quota model, approval routing, year rollover, export contract, audit log.
