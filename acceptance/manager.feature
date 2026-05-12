@@ -87,7 +87,7 @@ Feature: Manager — approvals queue, team calendar, skip-level chain
   @basic @team-calendar
   Scenario: Team calendar grid renders the current month with one row per team member
     When I open the team calendar for the current month
-    Then I see one row per direct report with one column per day
+    Then I see one row per member of my selected team (per §11.2 — keyed off the `team` field, not the org tree) with one column per day
     And each cell renders one of: absence type colour, worktime hours, "BT" badge, or "Pending" badge
 
   @basic @team-calendar

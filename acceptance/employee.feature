@@ -153,7 +153,7 @@ Feature: Employee — worktime, absences, balances, notifications
   Scenario: Paragraph stays Pending until both manager AND HR approve (H8)
     Given I have a Pending half-day Paragraph for "2026-05-12" with attached document
     When my manager Approves the absence
-    Then the absence status remains "Pending HR document validation"
+    Then the absence status remains "PendingDoc"
     And my Paragraph balance has not yet decremented
 
   # ---- PN (sick leave) ----
@@ -161,7 +161,7 @@ Feature: Employee — worktime, absences, balances, notifications
   @basic @pn
   Scenario: Log PN spanning multiple days — no quota touched, manager + team + HR notified
     When I log PN from "2026-04-20" to "2026-04-30"
-    Then the entry is saved with status "Logged"
+    Then the entry is saved with status "Approved"
     And no quota is decremented
     And my direct manager, my same-team members and the HR group receive a PN notification
 

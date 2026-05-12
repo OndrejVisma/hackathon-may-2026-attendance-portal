@@ -241,15 +241,22 @@ Consequences:
 - Historical balance queries are reproducible by replaying entry states as of a target date; no separate counter to reconcile.
 - "Used" is naturally split into **realised** (entries whose date range has fully elapsed) vs **planned** (entries whose date range is today or in the future). The balance screen MAY surface this split.
 
+> **Gherkin reading guide.** Where `acceptance/` scenarios assert that a balance "decrements by N", "is refunded by N", or "increases by N", the assertion is on the **observable change in the computed `remaining`** (or in the `reserved` / `used` view) following the state transition — *not* on a stored counter being mutated. No counter exists per the model above; the language is shorthand for the observable outcome of a state transition. Implementations that store a real counter still satisfy the scenario if the observed value matches.
+
 ## 7. Approval workflow
 
 Every planned absence and every overtime request goes through the same state machine:
 
 ```
-Draft -> Pending -> Approved
-                 -> Rejected
-                 -> Withdrawn (by employee while still Pending)
+Draft -> Pending ----------------> Approved
+              \                 -> Rejected
+               \                -> Withdrawn (by employee while still Pending)
+                \-> PendingDoc -> Approved        (HR validates document)
+                              -> Rejected         (HR rejects document)
+                              -> Withdrawn        (employee withdraws — still allowed)
 ```
+
+**PendingDoc** is a Pending sub-state used only by document-required types (Paragraph, OCR, Special leave) after the manager has Approved but before HR has validated the attached document (H8). For quota and withdrawal purposes PendingDoc behaves identically to Pending: working-days stay in `reserved` (not `used`) and the employee may still Withdraw. See §7.2 and §8.2 for the transitions in and out.
 
 **Draft** is a real persisted state — the employee has filled out (and saved) a request but has not yet submitted it for approval. Drafts are visible only to the requester, do not reserve quota, and do not notify anyone. The employee can edit a Draft freely or delete it. Submitting a Draft moves it to Pending (or directly to Approved for auto-approved types — see below).
 
@@ -275,7 +282,12 @@ A manager opens the approvals queue. **By default the queue shows requests route
 - any soft warnings on the entry,
 - a presence-of-document indicator if a document is attached. **The manager does not see, preview, or validate the document content** — that is HR's responsibility (§8.2).
 
-The manager picks Approve or Reject; reject requires a free-text reason. The decision triggers an email to the employee. On approve, the entry transitions Pending → Approved; per §6.5, this immediately moves its working-days from `reserved` to `used` in the computed quota view (no counter mutation).
+The manager picks Approve or Reject; reject requires a free-text reason. The decision triggers an email to the employee.
+
+**Manager-approve outcome depends on whether the type requires a document (H8).**
+
+- **No-document types (Vacation, Overtime).** The entry transitions Pending → Approved; per §6.5, working-days move from `reserved` to `used` in the computed quota view (no counter mutation).
+- **Document-required types (Paragraph, OCR, Special leave).** The entry transitions Pending → **PendingDoc** — a Pending sub-state in which the manager has cleared the request but HR has not yet validated the attached document (H8). Working-days stay in `reserved` (they have *not* moved to `used` yet). The entry reaches Approved only when HR validates the document (§8.2). PendingDoc is a Pending state for all quota and withdrawal purposes: the employee may still Withdraw, and HR's document Reject from PendingDoc terminates the entry as Rejected (working-days released from `reserved`, never enter `used`).
 
 ### 7.3 Withdrawal and cancellation
 
@@ -295,8 +307,8 @@ The employee uploads the document while filling out the absence form — drag-an
 
 HR has a dedicated "Pending documents" queue. Each entry shows the requester, absence type, dates, the file (preview), and a free-text reason field. HR approves or rejects.
 
-- **Approve.** No further action needed; the absence proceeds through the normal manager-approval path.
-- **Reject** *after* the absence is already manager-approved. The portal:
+- **Approve.** If the absence is in PendingDoc (manager already approved per §7.2), the entry transitions PendingDoc → Approved and working-days move from `reserved` to `used` (per §6.5). If the absence is still Pending (manager has not decided yet), document approval has no effect on state — the entry waits for the manager and follows the §7.2 manager-approve path on decision.
+- **Reject** *after* the absence is already manager-approved (i.e. state is PendingDoc). The portal:
   1. Transitions the entry to Rejected. Per §6.5, the entry stops contributing to `used` automatically — no counter is "refunded".
   2. Emails the employee with HR's reason.
   3. Writes an audit entry capturing the state change (actor, before, after).
