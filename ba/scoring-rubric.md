@@ -2,7 +2,7 @@
 
 **Audience:** Judges evaluating the BA lane; BAs running a self-evaluation pass.
 **Purpose:** How the BA's end-of-day bundle is scored.
-**Total:** 100 points.
+**Total:** 100 Basic + up to 30 Bonus (gated by Basic ≥ 90%) = up to 130 points.
 **Date:** 2026-05-12
 
 > The BA lane is a **parallel scoring axis**, judged independently of build teams. The BA does not staff a team and does not gate dev flow. Output is an end-of-day **analysis bundle** — story set + dependency analysis + traceability matrix + team-shape recommendations + Bonus ROI ranking.
@@ -11,19 +11,33 @@
 
 ---
 
-## Scoring axes (100 pts total)
+## Basic scoring axes (100 pts)
 
 | Axis | Max | What is being scored |
 |---|---|---|
-| Story quality | 25 | Per-story shape, INVEST adherence, 2h sizing, Gherkin linkage |
-| Coverage | 20 | Fraction of spec §13 + §9 catalogue sliced into stories |
+| Story quality | 25 | Per-story shape, INVEST adherence, 2h sizing, well-formed G/W/T |
+| Coverage | 20 | Fraction of spec §13 + §9 catalogue sliced into stories with G/W/T |
 | Dependency analysis | 15 | Map quality, critical path identified, parallelisation logic |
 | Traceability matrix | 15 | Spec → story → Gherkin → rule → notification → audit |
 | Bonus ROI ranking | 10 | Top 5 axes with explicit, defensible reasoning |
 | Team-shape recommendations | 10 | 2 / 4 / 7-person plans with cuts named |
 | Polish | 5 | Readability, organisation, AI-assisted workflow shown |
 
-Total = **100 pts**.
+Subtotal = **100 pts**.
+
+## Bonus tier (up to 30 pts, gated)
+
+Mirrors the team rubric: BA Bonus is counted **only when the BA Basic score is ≥ 90 pts**. Below that gate, Bonus contributions earn zero. Above the gate, full stories (with G/W/T) for spec §14 Bonus axes earn points up to the cap.
+
+| Signal | Pts per axis | Notes |
+|---|---|---|
+| Bonus axis with ≥ 2 well-shaped G/W/T stories | ~5 | Quality over quantity — one excellent story beats two shallow ones. |
+| Proposed-new G/W/T scenarios for Bonus edge cases (dedup, idempotency, template registry, hash-chain integrity, etc.) | ~1-2 each | Same standard as Basic proposed-new (genuine gap-finding only). |
+| Dependency analysis of Bonus axes (which Bonus reuses Basic infra, which conflicts) | ~3-5 | Shipped as an addendum to the Basic dependency map. |
+
+Cap = **30 pts**. Total BA-lane ceiling = 100 + 30 = **130 pts**.
+
+Coverage requirement at the gate: Basic ≥ 90 pts AND all 14 §13 items present AND all H1-H10 + S1-S6 rules covered by ≥ 1 G/W/T. If any of those fail, Bonus is zero regardless of how many Bonus stories are authored.
 
 ---
 

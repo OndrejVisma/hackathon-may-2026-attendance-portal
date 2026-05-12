@@ -173,7 +173,9 @@ One story per scheduled or one-off job. ~2-3h. Year-rollover dry-run, year-rollo
 
 ## Bonus ROI ranking — the framework
 
-Your bundle ranks the top 5 Bonus axes from spec §14 with explicit reasoning. Use these criteria:
+Your bundle ranks the top 5 Bonus axes from spec §14 with explicit reasoning. **Once Basic coverage is complete (≥ 90 pts, see [`scoring-rubric.md`](scoring-rubric.md)), authoring full G/W/T stories for the top-ranked axes earns up to 30 additional points.** Ranking alone is Basic; story production is Bonus.
+
+Use these criteria for the ranking:
 
 1. **Effort** — how many 2h slices to ship (lower is better).
 2. **Judge visibility** — how visible in a 10-min demo (higher is better).

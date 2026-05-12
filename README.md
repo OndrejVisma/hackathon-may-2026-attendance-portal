@@ -97,7 +97,7 @@ Total **160 points**.
 | Code quality | 10 | Structure / DRY (`jscpd`) / complexity. AI fallback where stack tooling fragments. |
 | Polish | 10 | Judge-subjective — UX, demo flow, agent workflow shown |
 
-**BA lane — separate parallel scoring, 100 pts.** BAs do not staff build teams. They produce an end-of-day analysis bundle judged independently under [`ba/scoring-rubric.md`](ba/scoring-rubric.md). Build teams do not depend on BAs — they build from `product-spec.md`, `acceptance/`, and the OpenAPI spec at the repo root from hour 0.
+**BA lane — separate parallel scoring, 100 Basic + 30 Bonus (gated) = up to 130 pts.** BAs do not staff build teams. They produce an end-of-day analysis bundle judged independently under [`ba/scoring-rubric.md`](ba/scoring-rubric.md). Bonus tier mirrors the team rubric — counted only when BA Basic ≥ 90 pts. Build teams do not depend on BAs — they build from `product-spec.md`, `acceptance/`, and the OpenAPI spec at the repo root from hour 0.
 
 Tiebreaker: head-to-head judge vote.
 

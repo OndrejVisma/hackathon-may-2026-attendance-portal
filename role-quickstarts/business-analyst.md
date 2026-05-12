@@ -32,12 +32,21 @@ A single artefact bundle, due at the end of the day, sized to fit in one folder 
 
 Anything in [`../ba/scoring-rubric.md`](ba/scoring-rubric.md) earns points. Anything else is decoration.
 
+## BA Bonus tier — extra points for Bonus-axis stories
+
+Mirroring the team rubric, the BA lane has a **Bonus tier worth up to 30 pts, gated by BA Basic ≥ 90%**. You earn Bonus points by authoring full stories (with G/W/T) for spec §14 Bonus axes — not just ranking them.
+
+Suggested approach:
+- Complete Basic coverage first; self-evaluate against [`../ba/scoring-rubric.md`](../ba/scoring-rubric.md) to verify the gate.
+- Once the gate is clear, pick from the top of your own Bonus ROI ranking (Basic deliverable #3).
+- Each Bonus axis with ≥ 2 well-shaped stories earns ~5 pts; cap is 30. Quality over quantity — a Bonus axis with one excellent story beats two shallow ones.
+- Proposed-new G/W/T for Bonus edge cases counts here too.
+
 ## What you do NOT deliver
 
 - Coordination of any build team.
 - Demo scripts (teams own their own).
 - Implementation guidance (the FE / BE / testing refinements own that).
-- Stories for Bonus axes a team is unlikely to reach (focus on Basic + top-5 Bonus).
 - A revised spec. You are not editing `product-spec.md` or the Gherkin.
 
 ## Suggested day shape
