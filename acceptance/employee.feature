@@ -153,7 +153,7 @@ Feature: Employee — worktime, absences, balances, notifications
   Scenario: Paragraph stays Pending until both manager AND HR approve (H8)
     Given I have a Pending half-day Paragraph for "2026-05-12" with attached document
     When my manager Approves the absence
-    Then the absence status remains "PendingDoc"
+    Then the absence status remains "Pending HR document validation"
     And my Paragraph balance has not yet decremented
 
   # ---- PN (sick leave) ----

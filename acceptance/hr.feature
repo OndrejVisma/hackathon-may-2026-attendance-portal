@@ -29,7 +29,7 @@ Feature: HR — documents queue, monthly export, audit log, quotas, exceptions r
 
   @basic @documents
   Scenario: Approving a document after manager approval finalises the absence
-    Given Janka's Paragraph absence for "2026-05-12 morning" is "PendingDoc"
+    Given Janka's Paragraph absence for "2026-05-12 morning" is "Pending HR document validation"
     And the manager has already Approved the absence
     When I Approve the document
     Then the absence status becomes "Approved"
@@ -38,7 +38,7 @@ Feature: HR — documents queue, monthly export, audit log, quotas, exceptions r
 
   @basic @documents
   Scenario: Rejecting a document after manager approval flips absence to Rejected and refunds quota
-    Given Janka's Paragraph absence for "2026-05-12 morning" is in state "PendingDoc" (manager has already Approved; HR document validation pending)
+    Given Janka's Paragraph absence for "2026-05-12 morning" is in state "Approved (manager) / Pending document"
     And Janka's Paragraph balance has decremented by "0.5"
     When I Reject the document with reason "Illegible scan"
     Then the absence status becomes "Rejected"
@@ -153,7 +153,7 @@ Feature: HR — documents queue, monthly export, audit log, quotas, exceptions r
   @bonus @email-channel
   Scenario: Document approval also delivers a "Document validated" email
     Given the email-channel Bonus is declared in eval-meta.yaml
-    And Janka's Paragraph absence for "2026-05-12 morning" is "PendingDoc"
+    And Janka's Paragraph absence for "2026-05-12 morning" is "Pending HR document validation"
     And the manager has already Approved the absence
     When I Approve the document
     Then the SMTP capture contains a "Document validated" email addressed to Janka
@@ -161,6 +161,6 @@ Feature: HR — documents queue, monthly export, audit log, quotas, exceptions r
   @bonus @email-channel
   Scenario: Document rejection also delivers a "Document rejected" email containing the reason
     Given the email-channel Bonus is declared in eval-meta.yaml
-    And Janka's Paragraph absence is in state "PendingDoc" (manager has already Approved; HR document validation pending)
+    And Janka's Paragraph absence is in state "Approved (manager) / Pending document"
     When I Reject the document with reason "Illegible scan"
     Then the SMTP capture contains a "Document rejected" email addressed to Janka containing the reason
