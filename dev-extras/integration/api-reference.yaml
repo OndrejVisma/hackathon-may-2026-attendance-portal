@@ -1,0 +1,1686 @@
+openapi: 3.1.0
+info:
+  title: Attendance Portal — Reference API
+  version: 0.1.0
+  license:
+    name: MIT
+    identifier: MIT
+  summary: |
+    Reference OpenAPI for the hackathon Attendance Portal. Starter contract — teams
+    fork, extend, and adapt. Mid-depth: every Basic-tier route is specified with
+    request/response DTOs for the happy path; errors share a single envelope
+    (`Problem`) and pagination uses the shared `cursor`/`limit` query parameters.
+    Bonus-tier routes (OIDC auth, real-time, exceptions replay, calendar sync,
+    Slack/Teams channels) are listed at the bottom of this file as comments —
+    teams targeting Bonus axes add their own paths.
+  description: |
+    **Source of truth.** This contract is derived from `product-spec.md` and
+    `dev-extras/backend/be-technical-refinement.md`. Where they disagree with this
+    file, the spec wins — flag the divergence in an issue.
+
+    **Tier scope.** Basic only. The Bonus routes block at the bottom is illustrative.
+    Teams MAY redesign any of these paths; the eval-runner checks behaviour, not
+    byte-exact contract conformance.
+
+    **Auth.** Two mutually exclusive auth modes are documented:
+    `mockAuth` (Basic, `AUTH_MODE=mock`, `POST /auth/mock-login`) and
+    `oidcAuth` (Bonus, real OIDC). Pick one per build; the production image
+    refuses to start with `AUTH_MODE=mock`.
+
+    **Status codes.** Per be-technical-refinement §2: 200/201/204 success;
+    400 validation; 401 unauthenticated; 403 forbidden; 404 not found;
+    409 state-machine / ETag conflict; 412 precondition failed; 422 semantic;
+    429 rate-limited; 5xx server. Never 200-with-error-body.
+
+servers:
+  - url: /api/v1
+    description: Relative (same-origin)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: auth
+    description: Mock login (Basic) + token refresh / logout. OIDC variants are Bonus.
+  - name: me
+    description: Caller's own user, balances, notifications, data export.
+  - name: absences
+    description: Absence lifecycle (Draft → Pending → Approved/Rejected/Withdrawn/Cancelled).
+  - name: worktime
+    description: Daily worktime entries (worktime / overtime / business trip).
+  - name: approvals
+    description: Manager + HR approval queues and decisions.
+  - name: documents
+    description: Document upload + HR validation.
+  - name: quotas
+    description: Computed balances (per §6.5) and HR per-user overrides.
+  - name: calendar
+    description: Team calendar grid.
+  - name: reports
+    description: Monthly XLSX export, audit log.
+  - name: admin
+    description: User / team / holiday / quota-config management (Admin role).
+
+paths:
+  # ── auth ──────────────────────────────────────────────────────────────────
+  /auth/mock-login:
+    post:
+      operationId: mockLogin
+      tags: [auth]
+      summary: Issue a session token for a seeded fixture user (Basic only)
+      description: |
+        Available only when `AUTH_MODE=mock`. Production builds MUST refuse to
+        start with `AUTH_MODE=mock` (be-tech-ref §3, DEC-005). No password.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id:
+                  $ref: '#/components/schemas/UserId'
+      responses:
+        '200':
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+        '404': { $ref: '#/components/responses/NotFound' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /auth/refresh:
+    post:
+      operationId: refreshToken
+      tags: [auth]
+      summary: Rotate access token using a refresh token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        '200':
+          description: New tokens
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Revoke current session and refresh token
+      responses:
+        '204': { description: Logged out }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  # ── me ───────────────────────────────────────────────────────────────────
+  /me:
+    get:
+      operationId: getMe
+      tags: [me]
+      summary: Current user (identity, roles, team, manager link)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /me/balances:
+    get:
+      operationId: getMyBalances
+      tags: [me, quotas]
+      summary: Computed quotas for the caller for a given year
+      parameters:
+        - in: query
+          name: year
+          schema: { type: integer, minimum: 2020, maximum: 2099 }
+          required: false
+          description: Defaults to current year.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BalanceReport' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /me/notifications:
+    get:
+      operationId: listMyNotifications
+      tags: [me]
+      summary: My notifications feed (in-portal records per §10)
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - in: query
+          name: unread_only
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageEnvelope'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: '#/components/schemas/Notification' }
+
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /me/notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [me]
+      summary: Mark a notification as read
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '204': { description: Marked read }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /me/data-export:
+    get:
+      operationId: exportMyData
+      tags: [me]
+      summary: GDPR data portability — caller's data as JSON archive (§32)
+      responses:
+        '200':
+          description: JSON archive
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserDataExport' }
+
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /me/deletion-request:
+    post:
+      operationId: requestAccountDeletion
+      tags: [me]
+      summary: Open an HR ticket to request account deletion (§32)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string, maxLength: 1000 }
+      responses:
+        '202': { description: Request opened }
+
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  # ── absences ─────────────────────────────────────────────────────────────
+  /absences:
+    get:
+      operationId: listAbsences
+      tags: [absences]
+      summary: List absences (filterable)
+      description: |
+        Employee sees own entries by default. Manager + HR may pass `user_id`
+        to view a subordinate or any user. Authorisation is enforced server-side
+        regardless of the filter.
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - in: query
+          name: user_id
+          schema: { $ref: '#/components/schemas/UserId' }
+        - in: query
+          name: state
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/AbsenceState' }
+          style: form
+          explode: false
+        - in: query
+          name: type
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/AbsenceType' }
+          style: form
+          explode: false
+        - in: query
+          name: from
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageEnvelope'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: '#/components/schemas/Absence' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+    post:
+      operationId: createAbsenceDraft
+      tags: [absences]
+      summary: Create a Draft absence (not yet submitted)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AbsenceCreate' }
+      responses:
+        '201':
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Absence' }
+          headers:
+            ETag:
+              schema: { type: string }
+              description: Opaque version tag for optimistic locking.
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '422': { $ref: '#/components/responses/SemanticError' }
+
+  /absences/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    get:
+      operationId: getAbsence
+      tags: [absences]
+      summary: Get a single absence
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Absence' }
+          headers:
+            ETag:
+              schema: { type: string }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+    patch:
+      operationId: updateAbsenceDraft
+      tags: [absences]
+      summary: Edit a Draft absence (Pending/Approved are immutable from this route)
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AbsenceUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Absence' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+
+    delete:
+      operationId: deleteAbsenceDraft
+      tags: [absences]
+      summary: Delete a Draft absence
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /absences/{id}/submit:
+    post:
+      operationId: submitAbsence
+      tags: [absences]
+      summary: Transition Draft → Pending (or → Approved for sickday / PN)
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Transitioned
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Absence' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/SemanticError' }
+
+  /absences/{id}/withdraw:
+    post:
+      operationId: withdrawAbsence
+      tags: [absences]
+      summary: Employee withdraws a Pending request (§7.3)
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Withdrawn
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Absence' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /absences/{id}/cancel:
+    post:
+      operationId: cancelAbsence
+      tags: [absences]
+      summary: Cancel an Approved future absence (§7.3)
+      description: |
+        Allowed up to and including the day BEFORE the absence start date.
+        Cancelling on/after the absence date requires HR — returns 403 for the
+        owner; HR may call this route regardless.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string, maxLength: 1000 }
+      responses:
+        '200':
+          description: Cancelled
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Absence' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ── approvals ────────────────────────────────────────────────────────────
+  /approvals:
+    get:
+      operationId: listApprovals
+      tags: [approvals]
+      summary: Pending approvals queue for the caller
+      description: |
+        Manager: routed-to-me by default. Optional `scope=chain` widens to any
+        descendant in the org tree (§7.2). HR sees the global queue including
+        escalations and pending documents (`scope=hr`).
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - in: query
+          name: scope
+          schema:
+            type: string
+            enum: [routed, chain, hr]
+            default: routed
+        - in: query
+          name: type
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/AbsenceType' }
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageEnvelope'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: '#/components/schemas/ApprovalQueueItem' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /approvals/{absence_id}/approve:
+    post:
+      operationId: approveAbsence
+      tags: [approvals]
+      summary: Manager (or skip-level / HR) approves a Pending absence
+      parameters:
+        - in: path
+          name: absence_id
+          required: true
+          schema: { $ref: '#/components/schemas/AbsenceId' }
+      responses:
+        '200':
+          description: Approved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Absence' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422':
+          description: Re-validation failed on transition (per §9.3 — e.g. quota now insufficient).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Problem' }
+
+  /approvals/{absence_id}/reject:
+    post:
+      operationId: rejectAbsence
+      tags: [approvals]
+      summary: Manager (or skip-level / HR) rejects a Pending absence
+      parameters:
+        - in: path
+          name: absence_id
+          required: true
+          schema: { $ref: '#/components/schemas/AbsenceId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 1, maxLength: 1000 }
+      responses:
+        '200':
+          description: Rejected
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Absence' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ── worktime ─────────────────────────────────────────────────────────────
+  /worktime:
+    get:
+      operationId: listWorktime
+      tags: [worktime]
+      summary: List worktime entries
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - in: query
+          name: user_id
+          schema: { $ref: '#/components/schemas/UserId' }
+        - in: query
+          name: from
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageEnvelope'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: '#/components/schemas/Worktime' }
+
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    post:
+      operationId: createWorktime
+      tags: [worktime]
+      summary: Log a worktime entry (Overtime flag auto-set by server)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorktimeCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Worktime' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '422': { $ref: '#/components/responses/SemanticError' }
+
+  /worktime/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    patch:
+      operationId: updateWorktime
+      tags: [worktime]
+      summary: Update a worktime entry
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorktimeUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Worktime' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/SemanticError' }
+
+    delete:
+      operationId: deleteWorktime
+      tags: [worktime]
+      summary: Delete a worktime entry
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ── documents ────────────────────────────────────────────────────────────
+  /absences/{absence_id}/documents:
+    post:
+      operationId: uploadAbsenceDocument
+      tags: [documents]
+      summary: Attach a document to an absence (multipart upload)
+      description: |
+        Accepted MIME: `image/png`, `image/jpeg`, `application/pdf`. Max 10 MB
+        per file (§8.1). May be called by employee OR HR (§16 O8 — PN). The
+        document is linked to the absence; HR validates separately.
+      parameters:
+        - in: path
+          name: absence_id
+          required: true
+          schema: { $ref: '#/components/schemas/AbsenceId' }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Uploaded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Document' }
+        '400':
+          description: Unsupported MIME type or oversize file.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '413':
+          description: Payload too large (> 10 MB).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Problem' }
+
+  /documents/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    get:
+      operationId: getDocument
+      tags: [documents]
+      summary: Download / preview a document (HR for preview, owner for own)
+      responses:
+        '200':
+          description: File content
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+            image/png:
+              schema: { type: string, format: binary }
+            image/jpeg:
+              schema: { type: string, format: binary }
+            application/pdf:
+              schema: { type: string, format: binary }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /documents/{id}/validate:
+    post:
+      operationId: validateDocument
+      tags: [documents]
+      summary: HR validates an uploaded document (approve or reject)
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [approved, rejected]
+                reason:
+                  type: string
+                  maxLength: 1000
+                  description: Required when `decision=rejected`.
+      responses:
+        '200':
+          description: Validated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Document' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ── quotas (HR overrides) ────────────────────────────────────────────────
+  /users/{user_id}/balances:
+    get:
+      operationId: getUserBalances
+      tags: [quotas]
+      summary: "Read another user's balances (Manager: direct reports; HR/Admin: any)"
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema: { $ref: '#/components/schemas/UserId' }
+        - in: query
+          name: year
+          schema: { type: integer, minimum: 2020, maximum: 2099 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BalanceReport' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/quota-config:
+    get:
+      operationId: getQuotaConfig
+      tags: [admin, quotas]
+      summary: Global quota defaults + per-user overrides for a given year (HR/Admin)
+      parameters:
+        - in: query
+          name: year
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  year: { type: integer }
+                  defaults: { $ref: '#/components/schemas/QuotaDefaults' }
+                  overrides:
+                    type: array
+                    items: { $ref: '#/components/schemas/QuotaOverride' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    patch:
+      operationId: updateQuotaConfig
+      tags: [admin, quotas]
+      summary: Update global defaults and/or upsert per-user overrides (HR/Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [year]
+              properties:
+                year: { type: integer }
+                defaults: { $ref: '#/components/schemas/QuotaDefaults' }
+                overrides:
+                  type: array
+                  items: { $ref: '#/components/schemas/QuotaOverride' }
+      responses:
+        '200': { description: Updated }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/year-rollover/preview:
+    post:
+      operationId: previewYearRollover
+      tags: [admin, quotas]
+      summary: Dry-run the year rollover (§6.3) — show before/after per user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from_year, to_year]
+              properties:
+                from_year: { type: integer }
+                to_year: { type: integer }
+      responses:
+        '200':
+          description: Preview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  to_year: { type: integer }
+                  per_user:
+                    type: array
+                    items: { $ref: '#/components/schemas/YearRolloverRow' }
+
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /admin/year-rollover/apply:
+    post:
+      operationId: applyYearRollover
+      tags: [admin, quotas]
+      summary: Apply the year rollover for real (HR/Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from_year, to_year, confirm]
+              properties:
+                from_year: { type: integer }
+                to_year: { type: integer }
+                confirm: { type: boolean, description: Must be `true` (defence-in-depth). }
+      responses:
+        '200': { description: Applied }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ── calendar ─────────────────────────────────────────────────────────────
+  /calendar:
+    get:
+      operationId: getCalendar
+      tags: [calendar]
+      summary: Team calendar grid (rows = team members, cols = days)
+      description: |
+        Returns one row per team member with per-day cells. Employee sees own row
+        only (§3 — `See team calendar: own row only`). Manager sees own team(s).
+      parameters:
+        - in: query
+          name: team_id
+          schema: { type: string }
+          description: Required for Manager/HR. Employee may omit (own row only).
+        - in: query
+          name: from
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CalendarGrid' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ── reports ──────────────────────────────────────────────────────────────
+  /reports/monthly-export:
+    get:
+      operationId: exportMonthlyReport
+      tags: [reports]
+      summary: Monthly XLSX (two-sheet) export (HR + Admin, DEC-034)
+      description: |
+        Returns the bilingual two-sheet workbook matching the accounting-system
+        contract (§11.1 + DEC-034). Sheet names + activity labels localised
+        per `lang` (defaults to caller's portal preference). Optional CSV
+        companion (§11.1) via `Accept: text/csv`.
+      parameters:
+        - in: query
+          name: year
+          required: true
+          schema: { type: integer }
+        - in: query
+          name: month
+          required: true
+          schema: { type: integer, minimum: 1, maximum: 12 }
+        - in: query
+          name: lang
+          schema:
+            type: string
+            enum: [sk, en]
+          description: Defaults to the caller's portal preference.
+        - in: header
+          name: Accept
+          schema:
+            type: string
+            enum:
+              - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+              - text/csv
+            default: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        '200':
+          description: File
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+            text/csv:
+              schema: { type: string }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /reports/audit-log:
+    get:
+      operationId: listAuditLog
+      tags: [reports]
+      summary: Audit log (HR + Admin only, §11.5)
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - in: query
+          name: actor
+          schema: { $ref: '#/components/schemas/UserId' }
+        - in: query
+          name: entity
+          schema:
+            type: string
+            enum: [absence, document, worktime, quota, user, team, holiday]
+        - in: query
+          name: kind
+          schema:
+            type: string
+            description: |
+              One of: Submit, Approve, Reject, Withdraw, Cancel, HR-Override,
+              Document-Approve, Document-Reject, Quota-Override, Year-Rollover-Apply.
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageEnvelope'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: '#/components/schemas/AuditEntry' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ── admin: users / teams / holidays ──────────────────────────────────────
+  /admin/users:
+    get:
+      operationId: listUsers
+      tags: [admin]
+      summary: List users (Admin)
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageEnvelope'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    post:
+      operationId: createUser
+      tags: [admin]
+      summary: Create a user (Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /admin/users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    patch:
+      operationId: updateUser
+      tags: [admin]
+      summary: Update a user (Admin) — incl. `direct_manager_id`, roles, team
+      description: |
+        Updating `direct_manager_id` MUST reject changes that would introduce a
+        cycle in the org tree (be-tech-ref §3, line 174) — 400 with a clear
+        message.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /admin/teams:
+    get:
+      operationId: listTeams
+      tags: [admin]
+      summary: List teams
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Team' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    post:
+      operationId: createTeam
+      tags: [admin]
+      summary: Create a team
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Team' }
+
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /admin/teams/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    patch:
+      operationId: updateTeam
+      tags: [admin]
+      summary: Rename a team or change membership
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                member_ids:
+                  type: array
+                  items: { $ref: '#/components/schemas/UserId' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Team' }
+
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /admin/holidays:
+    get:
+      operationId: listHolidays
+      tags: [admin]
+      summary: List public holidays (current + future years cached)
+      parameters:
+        - in: query
+          name: year
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Holiday' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    post:
+      operationId: upsertHoliday
+      tags: [admin]
+      summary: Add or override a holiday
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Holiday' }
+      responses:
+        '201': { description: Created }
+
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /admin/holidays/{date}:
+    delete:
+      operationId: deleteHoliday
+      tags: [admin]
+      summary: Remove a holiday for a specific date
+      parameters:
+        - in: path
+          name: date
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '204': { description: Deleted }
+
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Default scheme used by all routes (mock or OIDC).
+    # Bonus: real OIDC alternative — teams targeting Bonus auth swap this in.
+    oidcAuth:
+      type: openIdConnect
+      openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
+      description: |
+        Bonus tier (DEC-005 — real auth). Teams implementing the OIDC Bonus
+        replace `bearerAuth` with this scheme on protected routes. Mock-mode
+        builds MUST NOT advertise this scheme.
+
+  parameters:
+    PathId:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, format: uuid }
+    IfMatch:
+      in: header
+      name: If-Match
+      schema: { type: string }
+      description: ETag from previous read for optimistic locking.
+    Cursor:
+      in: query
+      name: cursor
+      schema: { type: string }
+      description: Opaque cursor from `next_cursor` of the previous page.
+    Limit:
+      in: query
+      name: limit
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+
+  responses:
+    Unauthenticated:
+      description: Missing or invalid credentials.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: Authenticated but not authorised for this resource.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: |
+        State-machine violation (e.g. submitting an already-Approved entry) or
+        ETag mismatch. Body identifies the failed transition.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    PreconditionFailed:
+      description: ETag mismatch on `If-Match`.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ValidationError:
+      description: |
+        Schema-level validation failure (missing required fields, wrong types,
+        out-of-range values). Body includes per-field errors.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    SemanticError:
+      description: |
+        Business-rule violation (hard rule failure per §9.1). Body includes
+        the failing rule ID (H1–H10) and a human-readable message.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+  schemas:
+    # ── shared primitives ────────────────────────────────────────────────
+    UserId:
+      type: string
+      format: uuid
+    AbsenceId:
+      type: string
+      format: uuid
+
+    Problem:
+      description: RFC 7807-style error envelope with extensions for this API.
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI identifying the error class.
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+        errors:
+          type: array
+          description: Per-field validation errors.
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              code: { type: string }
+              message: { type: string }
+        rule_id:
+          type: string
+          description: For 422 semantic errors — the failing rule ID (e.g. `H5`).
+        soft_warnings:
+          type: array
+          description: |
+            Even on success, the server MAY include soft-warning IDs the client
+            should surface (S1–S6 per §9.2). On error responses, this carries
+            any warnings produced before the hard failure.
+          items:
+            type: object
+            properties:
+              rule_id: { type: string }
+              message: { type: string }
+
+    PageEnvelope:
+      type: object
+      properties:
+        next_cursor:
+          type: [string, "null"]
+          description: Cursor for the next page. `null` when no more results.
+
+    # ── auth ─────────────────────────────────────────────────────────────
+    AuthTokens:
+      type: object
+      required: [access_token, expires_in]
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, default: Bearer }
+        expires_in:
+          type: integer
+          description: Seconds until access-token expiry.
+        refresh_token:
+          type: string
+          description: Optional — present when refresh-token rotation is used.
+
+    # ── user / team / holiday ────────────────────────────────────────────
+    Role:
+      type: string
+      enum: [employee, manager, hr, admin]
+
+    User:
+      type: object
+      required: [id, email, first_name, last_name, roles]
+      properties:
+        id: { $ref: '#/components/schemas/UserId' }
+        email: { type: string, format: email }
+        first_name: { type: string }
+        last_name: { type: string }
+        roles:
+          type: array
+          items: { $ref: '#/components/schemas/Role' }
+        team_id: { type: [string, "null"] }
+        direct_manager_id:
+          oneOf:
+            - $ref: '#/components/schemas/UserId'
+            - type: "null"
+        preferred_language:
+          type: string
+          enum: [sk, en]
+          default: sk
+        active: { type: boolean, default: true }
+
+    UserCreate:
+      type: object
+      required: [email, first_name, last_name, roles]
+      properties:
+        email: { type: string, format: email }
+        first_name: { type: string }
+        last_name: { type: string }
+        roles:
+          type: array
+          items: { $ref: '#/components/schemas/Role' }
+        team_id: { type: string }
+        direct_manager_id: { $ref: '#/components/schemas/UserId' }
+        preferred_language:
+          type: string
+          enum: [sk, en]
+
+    UserUpdate:
+      type: object
+      properties:
+        first_name: { type: string }
+        last_name: { type: string }
+        roles:
+          type: array
+          items: { $ref: '#/components/schemas/Role' }
+        team_id: { type: [string, "null"] }
+        direct_manager_id:
+          oneOf:
+            - $ref: '#/components/schemas/UserId'
+            - type: "null"
+        active: { type: boolean }
+        preferred_language:
+          type: string
+          enum: [sk, en]
+
+    Team:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        member_ids:
+          type: array
+          items: { $ref: '#/components/schemas/UserId' }
+
+    Holiday:
+      type: object
+      required: [date, name]
+      properties:
+        date: { type: string, format: date }
+        name: { type: string }
+
+    # ── absence ──────────────────────────────────────────────────────────
+    AbsenceType:
+      type: string
+      description: |
+        Per §4. `pn` and `paternity` are kept distinct pending DEC-014; teams
+        may collapse them if the decision lands as "merge".
+      enum: [vacation, sickday, pn, paternity, paragraph, ocr, special]
+
+    AbsenceState:
+      type: string
+      description: |
+        State machine per §7. `cancelled` is a terminal post-Approved state
+        per §7.3.
+      enum: [draft, pending, approved, rejected, withdrawn, cancelled]
+
+    HalfDaySlot:
+      type: string
+      enum: [morning, afternoon]
+      description: |
+        Present only when `half_day=true`. Morning = 08:00–12:00,
+        Afternoon = 12:30–16:30 (§12.2, DEC-033).
+
+    Absence:
+      type: object
+      required: [id, user_id, type, state, date_from, date_to]
+      properties:
+        id: { $ref: '#/components/schemas/AbsenceId' }
+        user_id: { $ref: '#/components/schemas/UserId' }
+        type: { $ref: '#/components/schemas/AbsenceType' }
+        state: { $ref: '#/components/schemas/AbsenceState' }
+        date_from: { type: string, format: date }
+        date_to: { type: string, format: date }
+        half_day: { type: boolean, default: false }
+        half_day_slot: { $ref: '#/components/schemas/HalfDaySlot' }
+        working_days:
+          type: number
+          description: |
+            Computed working days in `[date_from, date_to]` minus weekends and
+            public holidays. Half-day absences contribute 0.5.
+        document_ids:
+          type: array
+          items: { type: string, format: uuid }
+        comment:
+          type: string
+          maxLength: 2000
+        reject_reason:
+          type: string
+          maxLength: 1000
+          description: Set when state = rejected.
+        soft_warnings:
+          type: array
+          items:
+            type: object
+            properties:
+              rule_id: { type: string, description: "e.g. S1, S5" }
+              message: { type: string }
+        created_at: { type: string, format: date-time }
+        submitted_at: { type: [string, "null"], format: date-time }
+        decided_at: { type: [string, "null"], format: date-time }
+        decided_by:
+          oneOf:
+            - $ref: '#/components/schemas/UserId'
+            - type: "null"
+
+    AbsenceCreate:
+      type: object
+      required: [type, date_from, date_to]
+      properties:
+        type: { $ref: '#/components/schemas/AbsenceType' }
+        date_from: { type: string, format: date }
+        date_to: { type: string, format: date }
+        half_day: { type: boolean, default: false }
+        half_day_slot: { $ref: '#/components/schemas/HalfDaySlot' }
+        comment: { type: string, maxLength: 2000 }
+
+    AbsenceUpdate:
+      type: object
+      description: Only valid while state = draft.
+      properties:
+        date_from: { type: string, format: date }
+        date_to: { type: string, format: date }
+        half_day: { type: boolean }
+        half_day_slot: { $ref: '#/components/schemas/HalfDaySlot' }
+        comment: { type: string, maxLength: 2000 }
+
+    # ── worktime ────────────────────────────────────────────────────────
+    Worktime:
+      type: object
+      required: [id, user_id, date, start_time, end_time]
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { $ref: '#/components/schemas/UserId' }
+        date: { type: string, format: date }
+        start_time: { type: string, pattern: '^[0-2][0-9]:[0-5][0-9]$' }
+        end_time: { type: string, pattern: '^[0-2][0-9]:[0-5][0-9]$' }
+        project_code: { type: string, default: GENERAL }
+        business_trip: { type: boolean, default: false }
+        overtime:
+          type: boolean
+          description: Server-set when the day's cumulative worktime exceeds 8h (§5.1).
+        note: { type: string, maxLength: 2000 }
+        soft_warnings:
+          type: array
+          items:
+            type: object
+            properties:
+              rule_id: { type: string }
+              message: { type: string }
+        created_at: { type: string, format: date-time }
+
+    WorktimeCreate:
+      type: object
+      required: [date, start_time, end_time]
+      properties:
+        date: { type: string, format: date }
+        start_time: { type: string, pattern: '^[0-2][0-9]:[0-5][0-9]$' }
+        end_time: { type: string, pattern: '^[0-2][0-9]:[0-5][0-9]$' }
+        project_code: { type: string }
+        business_trip: { type: boolean }
+        note: { type: string, maxLength: 2000 }
+
+    WorktimeUpdate:
+      type: object
+      properties:
+        start_time: { type: string, pattern: '^[0-2][0-9]:[0-5][0-9]$' }
+        end_time: { type: string, pattern: '^[0-2][0-9]:[0-5][0-9]$' }
+        project_code: { type: string }
+        business_trip: { type: boolean }
+        note: { type: string, maxLength: 2000 }
+
+    # ── document ────────────────────────────────────────────────────────
+    DocumentState:
+      type: string
+      enum: [pending_validation, approved, rejected]
+
+    Document:
+      type: object
+      required: [id, absence_id, mime_type, size_bytes, state]
+      properties:
+        id: { type: string, format: uuid }
+        absence_id: { $ref: '#/components/schemas/AbsenceId' }
+        filename: { type: string }
+        mime_type:
+          type: string
+          enum: [image/png, image/jpeg, application/pdf]
+        size_bytes: { type: integer }
+        state: { $ref: '#/components/schemas/DocumentState' }
+        reject_reason: { type: string, maxLength: 1000 }
+        uploaded_by: { $ref: '#/components/schemas/UserId' }
+        uploaded_at: { type: string, format: date-time }
+        validated_by:
+          oneOf:
+            - $ref: '#/components/schemas/UserId'
+            - type: "null"
+        validated_at: { type: [string, "null"], format: date-time }
+
+    # ── quotas + balances ───────────────────────────────────────────────
+    QuotaDefaults:
+      type: object
+      properties:
+        statutory_vacation: { type: integer, default: 20 }
+        bonus_vacation: { type: integer, default: 3 }
+        sickday: { type: integer, default: 3 }
+        paragraph: { type: integer, default: 7 }
+        ocr: { type: integer, default: 7 }
+        special: { type: integer, default: 5 }
+        carry_over_limit:
+          type: integer
+          default: 5
+          description: |
+            Threshold above which bonus is withheld next year (§6.3). Global only;
+            no per-user override.
+
+    QuotaOverride:
+      type: object
+      required: [user_id]
+      properties:
+        user_id: { $ref: '#/components/schemas/UserId' }
+        statutory_vacation: { type: integer }
+        bonus_vacation: { type: integer }
+        sickday: { type: integer }
+        paragraph: { type: integer }
+        ocr: { type: integer }
+        special: { type: integer }
+
+    Bucket:
+      type: object
+      description: |
+        Computed view per §6.5 — `remaining = allocated - reserved - used`.
+        For vacation, `carried_over` is the previous-year leftover; `bonus_withheld`
+        is true when this year's bonus allocation is 0 due to over-accumulation.
+      properties:
+        allocated: { type: number }
+        reserved: { type: number }
+        used: { type: number }
+        used_realised:
+          type: number
+          description: Subset of `used` whose date range has fully elapsed.
+        used_planned:
+          type: number
+          description: Subset of `used` whose date range is today or future.
+        remaining: { type: number }
+        carried_over: { type: number }
+        bonus_withheld: { type: boolean }
+
+    BalanceReport:
+      type: object
+      required: [user_id, year, buckets]
+      properties:
+        user_id: { $ref: '#/components/schemas/UserId' }
+        year: { type: integer }
+        buckets:
+          type: object
+          properties:
+            vacation: { $ref: '#/components/schemas/Bucket' }
+            sickday: { $ref: '#/components/schemas/Bucket' }
+            paragraph: { $ref: '#/components/schemas/Bucket' }
+            ocr: { $ref: '#/components/schemas/Bucket' }
+            special: { $ref: '#/components/schemas/Bucket' }
+
+    YearRolloverRow:
+      type: object
+      properties:
+        user_id: { $ref: '#/components/schemas/UserId' }
+        leftover_statutory: { type: number }
+        leftover_bonus: { type: number }
+        carry_over: { type: number }
+        bonus_withheld: { type: boolean }
+        new_year_statutory: { type: number }
+        new_year_bonus: { type: number }
+
+    # ── approvals queue / audit / calendar ──────────────────────────────
+    ApprovalQueueItem:
+      type: object
+      properties:
+        absence_id: { $ref: '#/components/schemas/AbsenceId' }
+        requester: { $ref: '#/components/schemas/User' }
+        type: { $ref: '#/components/schemas/AbsenceType' }
+        date_from: { type: string, format: date }
+        date_to: { type: string, format: date }
+        half_day: { type: boolean }
+        working_days: { type: number }
+        requester_remaining:
+          type: number
+          description: Remaining quota in the relevant bucket (so the manager can judge fairness).
+        soft_warnings:
+          type: array
+          items:
+            type: object
+            properties:
+              rule_id: { type: string }
+              message: { type: string }
+        has_document: { type: boolean }
+        routing:
+          type: string
+          enum: [direct, chain, hr]
+          description: How this item reached the caller.
+        submitted_at: { type: string, format: date-time }
+
+    AuditEntry:
+      type: object
+      required: [id, actor_id, kind, entity, entity_id, at]
+      properties:
+        id: { type: string, format: uuid }
+        actor_id: { $ref: '#/components/schemas/UserId' }
+        kind:
+          type: string
+          description: |
+            One of Submit, Approve, Reject, Withdraw, Cancel, HR-Override,
+            Document-Approve, Document-Reject, Quota-Override, Year-Rollover-Apply.
+        entity:
+          type: string
+          enum: [absence, document, worktime, quota, user, team, holiday]
+        entity_id: { type: string, format: uuid }
+        before:
+          type: object
+          description: Snapshot of the entity prior to the change.
+          additionalProperties: true
+        after:
+          type: object
+          description: Snapshot of the entity after the change.
+          additionalProperties: true
+        at: { type: string, format: date-time }
+        reason: { type: string }
+
+    Notification:
+      type: object
+      required: [id, recipient_id, event_kind, subject, body, created_at, read]
+      properties:
+        id: { type: string, format: uuid }
+        recipient_id: { $ref: '#/components/schemas/UserId' }
+        event_kind:
+          type: string
+          description: |
+            Stable identifier for the event (e.g. `absence.submitted`,
+            `absence.approved`, `absence.rejected`, `absence.withdrawn`,
+            `absence.cancelled`, `document.uploaded`, `document.validated`,
+            `quota.approaching`, `year.rollover_summary`).
+        subject: { type: string }
+        body: { type: string }
+        absence_id:
+          oneOf:
+            - $ref: '#/components/schemas/AbsenceId'
+            - type: "null"
+        created_at: { type: string, format: date-time }
+        read: { type: boolean }
+        read_at: { type: [string, "null"], format: date-time }
+
+    CalendarGrid:
+      type: object
+      required: [team_id, from, to, members]
+      properties:
+        team_id: { type: [string, "null"] }
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        members:
+          type: array
+          items: { $ref: '#/components/schemas/CalendarRow' }
+
+    CalendarRow:
+      type: object
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+        cells:
+          type: array
+          items: { $ref: '#/components/schemas/CalendarCell' }
+
+    CalendarCell:
+      type: object
+      properties:
+        date: { type: string, format: date }
+        kind:
+          type: string
+          enum: [work, absence, weekend, holiday, mixed, empty]
+        absence_type: { $ref: '#/components/schemas/AbsenceType' }
+        absence_state: { $ref: '#/components/schemas/AbsenceState' }
+        worktime_hours: { type: number }
+        business_trip: { type: boolean }
+        pending_approval: { type: boolean }
+
+    UserDataExport:
+      type: object
+      description: GDPR data-portability payload (§32).
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+        absences:
+          type: array
+          items: { $ref: '#/components/schemas/Absence' }
+        worktime:
+          type: array
+          items: { $ref: '#/components/schemas/Worktime' }
+        documents_metadata:
+          type: array
+          items: { $ref: '#/components/schemas/Document' }
+        balances:
+          type: array
+          items: { $ref: '#/components/schemas/BalanceReport' }
+        audit_log_entries:
+          type: array
+          items: { $ref: '#/components/schemas/AuditEntry' }
+        generated_at: { type: string, format: date-time }
+
+# ── Bonus tier — illustrative endpoints (not specified in detail) ────────────
+# Teams targeting the Bonus axes in §14 will add routes such as:
+#
+# /auth/oidc/start                  Begin OIDC login flow (Google / Microsoft).
+# /auth/oidc/callback               OIDC callback — exchange code for tokens.
+# /auth/magic-link/request          Magic-link email login (alternative Bonus).
+# /auth/magic-link/consume
+# /admin/exceptions-replay          §11.6 Exceptions replay — list/run/recompute.
+# /admin/tempo-import               §14 Tempo XLSX import — preview + commit.
+# /admin/quotas/bulk-edit           §14 Bulk-edit quotas via uploaded CSV.
+# /me/calendar.ics                  §14 Public ICS feed per user.
+# /teams/{id}/calendar.ics          §14 Public ICS feed per team.
+# /admin/calendar-sync              §14 Push to Google/Outlook team calendar.
+# /events (websocket)               §14 Live updates for approval queue.
+# /admin/manager-analytics          §14 Manager analytics (heat-map etc.).
+#
+# Each Bonus team owns its route shape; this file does not pre-empt their design.
