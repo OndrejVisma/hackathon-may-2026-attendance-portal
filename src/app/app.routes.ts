@@ -39,10 +39,16 @@ export const routes: Routes = [
         title: 'Approvals',
       },
       {
+        path: 'team-calendar',
+        canActivate: [requireRole('manager')],
+        loadComponent: async () => (await import('../features/approvals/presentation/team-calendar.page')).TeamCalendarPage,
+        title: 'Team calendar',
+      },
+      {
         path: 'hr',
         canActivate: [requireRole('hr')],
-        loadComponent: async () => (await import('../features/documents/presentation/documents-queue.page')).DocumentsQueuePage,
-        title: 'HR documents',
+        loadComponent: async () => (await import('../features/documents/presentation/hr-home.page')).HrHomePage,
+        title: 'HR',
       },
       {
         path: 'admin',

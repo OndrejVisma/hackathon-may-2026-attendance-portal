@@ -4,11 +4,12 @@ import { AuthSession, fullName, hasRole } from '../../features/auth';
 import { AuthApi } from '../../features/auth/infrastructure/auth-api';
 import { ThemeService } from './theme.service';
 import { ToastHostComponent } from '../../shared/ui/toast-host.component';
+import { PrivacyNoticeComponent } from './privacy-notice.component';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastHostComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastHostComponent, PrivacyNoticeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a class="skip-link" href="#main-content">Skip to content</a>
@@ -19,6 +20,7 @@ import { ToastHostComponent } from '../../shared/ui/toast-host.component';
         <a routerLink="/balances" routerLinkActive="active">Balances</a>
         <a routerLink="/notifications" routerLinkActive="active">Notifications</a>
         @if (showApprovals()) { <a routerLink="/approvals" routerLinkActive="active">Approvals</a> }
+        @if (showApprovals()) { <a routerLink="/team-calendar" routerLinkActive="active">Team calendar</a> }
         @if (showHr()) { <a routerLink="/hr" routerLinkActive="active">HR</a> }
         @if (showAdmin()) { <a routerLink="/admin" routerLinkActive="active">Admin</a> }
       </nav>
@@ -34,6 +36,7 @@ import { ToastHostComponent } from '../../shared/ui/toast-host.component';
       <router-outlet />
     </main>
     <app-toast-host />
+    <app-privacy-notice />
   `,
   styles: [`
     :host { display: block; min-height: 100vh; }
