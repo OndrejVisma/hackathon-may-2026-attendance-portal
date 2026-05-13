@@ -46,3 +46,19 @@ bonus_declared:
                             # dismissable forever in localStorage
   - visual-regression       # Playwright toHaveScreenshot baselines for 5 routes × 2
                             # themes; tolerance 1% maxDiffPixelRatio
+  - telemetry               # web-vitals (LCP/INP/CLS) sampled, ErrorHandler
+                            # routes unhandled errors to a beacon endpoint;
+                            # DNT respected; SAFE_FIELDS allow-list sanitises
+                            # every payload; uses sendBeacon when available
+  - feature-flags           # FeatureFlagsService fetches /feature-flags
+                            # at startup; signal-backed flag() accessor;
+                            # unknown flag defaults false so missing flag
+                            # never breaks production; localStorage cache
+                            # for offline first-paint
+  - circuit-breaker         # per-endpoint-family interceptor: 5 consecutive
+                            # 5xx in 30s trips OPEN; OPEN short-circuits
+                            # with synthetic 503; HALF_OPEN probe after 60s
+  - persisted-state-migration  # versioned localStorage with forward-only
+                               # migrations; theme service migrated v0->v1
+                               # as the reference adopter; corrupted blobs
+                               # are dropped silently and defaults used
