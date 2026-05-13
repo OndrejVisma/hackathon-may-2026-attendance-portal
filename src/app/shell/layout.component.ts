@@ -5,13 +5,19 @@ import { AuthApi } from '../../features/auth/infrastructure/auth-api';
 import { ThemeService } from './theme.service';
 import { ToastHostComponent } from '../../shared/ui/toast-host.component';
 import { PrivacyNoticeComponent } from './privacy-notice.component';
+import { OfflineBannerComponent } from './offline-banner.component';
+import { ShortcutsOverlayComponent } from './shortcuts-overlay.component';
 import { I18nService } from '../../shared/i18n/i18n.service';
 import { TranslatePipe } from '../../shared/i18n/t.pipe';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastHostComponent, PrivacyNoticeComponent, TranslatePipe],
+  imports: [
+    RouterOutlet, RouterLink, RouterLinkActive,
+    ToastHostComponent, PrivacyNoticeComponent, OfflineBannerComponent, ShortcutsOverlayComponent,
+    TranslatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a class="skip-link" href="#main-content">Skip to content</a>
@@ -42,8 +48,10 @@ import { TranslatePipe } from '../../shared/i18n/t.pipe';
     <main id="main-content" tabindex="-1">
       <router-outlet />
     </main>
+    <app-offline-banner />
     <app-toast-host />
     <app-privacy-notice />
+    <app-shortcuts-overlay />
   `,
   styles: [`
     :host { display: block; min-height: 100vh; }

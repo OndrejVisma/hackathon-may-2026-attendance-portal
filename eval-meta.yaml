@@ -27,5 +27,10 @@ high_risk_paths:
   - src/features/reports/presentation/                  # export download
   - src/shared/http/interceptors/                       # auth header, retry, breaker
 
-# Bonus axes declared (per spec §14)
-bonus_declared: []  # populate as features land: oidc | i18n-en | mobile | pwa | websocket | email-channel
+# Bonus axes declared (per product-spec §14 + FE refinement)
+bonus_declared:
+  - i18n-en          # multi-language UI: catalogue + locale toggle (sk/en)
+  - pwa              # installable shell + service worker + offline banner
+  - keyboard-shortcuts  # ? opens overlay; g d|b|n|a|c|h|s chords; Esc closes
+  - print-styles     # @media print: light theme, ink-friendly tables, hidden chrome
+  - etag-conflict    # If-Match round-trip, 409 toast, cache invalidation

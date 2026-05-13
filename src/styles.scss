@@ -29,3 +29,33 @@ html, body {
     scroll-behavior: auto !important;
   }
 }
+
+// Print styles per FE refinement §34.
+// HR / payroll occasionally print balance reports and audit-log slices.
+@media print {
+  :root { color-scheme: light; }
+
+  // Force light theme regardless of user preference.
+  [data-theme="dark"] {
+    --surface-base: #ffffff; --surface-raised: #ffffff; --surface-sunken: #f4f4f5;
+    --text-primary: #18181b; --text-secondary: #52525b; --text-muted: #71717a;
+    --border-default: #cccccc;
+  }
+
+  // Strip chrome that adds no value on paper.
+  .topbar, .skip-link, app-toast-host, app-offline-banner,
+  app-privacy-notice, app-shortcuts-overlay, .actions, .filters {
+    display: none !important;
+  }
+
+  // Simplify tables for ink-friendly output.
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #999; padding: 4px 6px; }
+  thead { display: table-header-group; }                  // repeat headers across pages
+  tr, .card, dl { break-inside: avoid; }                  // don't split records
+
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 90%; color: #444; }
+  a[href^="/"]::after { content: ""; }                    // skip internal hrefs
+
+  body, main { background: #fff; color: #000; padding: 0; }
+}

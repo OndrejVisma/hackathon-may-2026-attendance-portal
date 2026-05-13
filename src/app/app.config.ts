@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, isDevMode } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -9,7 +9,9 @@ import { timeoutInterceptor } from '../shared/http/interceptors/timeout.intercep
 import { retryInterceptor } from '../shared/http/interceptors/retry.interceptor';
 import { errorEnvelopeInterceptor } from '../shared/http/interceptors/error-envelope.interceptor';
 import { authInterceptor } from '../shared/http/interceptors/auth.interceptor';
+import { etagInterceptor, conflictInterceptor } from '../shared/http/interceptors/etag.interceptor';
 import { API_CONFIG, DEFAULT_API_CONFIG } from '../shared/http/api-config';
+import { provideServiceWorker } from '@angular/service-worker';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -18,7 +20,14 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideHttpClient(
       withFetch(),
-      withInterceptors([authInterceptor, errorEnvelopeInterceptor, retryInterceptor, timeoutInterceptor]),
+      withInterceptors([
+        authInterceptor,
+        etagInterceptor,        // outbound If-Match + inbound ETag capture
+        errorEnvelopeInterceptor,
+        conflictInterceptor,    // 409/412 toast + cache invalidation
+        retryInterceptor,
+        timeoutInterceptor,
+      ]),
     ),
     provideQueryClient(
       new QueryClient({
@@ -31,6 +40,9 @@ export const appConfig: ApplicationConfig = {
         },
       }),
     ),
-    { provide: API_CONFIG, useValue: DEFAULT_API_CONFIG },
+    { provide: API_CONFIG, useValue: DEFAULT_API_CONFIG }, provideServiceWorker('ngsw-worker.js', {
+            enabled: !isDevMode(),
+            registrationStrategy: 'registerWhenStable:30000'
+          }),
   ],
 };
