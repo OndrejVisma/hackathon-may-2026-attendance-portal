@@ -1,0 +1,31 @@
+# Eval-runner contract per FE refinement §20.
+# Repo: attendance-portal frontend
+team: TBD-set-team-name
+schema_version: 1
+
+stack:
+  frontend: angular@19
+  backend: dotnet@8
+  database: mariadb@10  # backend's call; FE is BE-agnostic
+
+entrypoint:
+  eval: make eval
+  dev: npm run start
+  install: npm ci
+  build: make build
+  test: make test
+  e2e: make e2e
+
+api_contract:
+  source: ../hackathon-may-2026-attendance-portal/dev-extras/integration/api-reference.yaml
+
+# Per FE refinement §20: high-risk paths array — paths an AI security pass scrutinises.
+high_risk_paths:
+  - src/features/auth/                                  # auth flow
+  - src/features/absences/presentation/                 # file upload UX
+  - src/features/documents/presentation/                # PDF preview iframe
+  - src/features/reports/presentation/                  # export download
+  - src/shared/http/interceptors/                       # auth header, retry, breaker
+
+# Bonus axes declared (per spec §14)
+bonus_declared: []  # populate as features land: oidc | i18n-en | mobile | pwa | websocket | email-channel
