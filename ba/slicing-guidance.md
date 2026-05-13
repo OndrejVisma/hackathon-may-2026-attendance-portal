@@ -17,19 +17,6 @@ A senior engineer with strong AI tooling delivers a vertical slice in ~2 hours. 
 
 Smaller than 2h → ceremony eats the budget. Larger than 2h → flies blind between commits. Reviewers see "could a competent pair do this in 2h?" and your story passes or fails on that question.
 
-## Build-window arithmetic (artefact)
-
-A single-day hackathon nets ~10 effective build hours after kickoff, demo prep, demo + eval, and breaks. Your analysis bundle includes a recommendation for each team shape:
-
-| Team size | Person-hours | Story budget | Coverage realistic |
-|---|---|---|---|
-| 2 | ~20 | ~10 stories | Basic items #1-#8 only; cut aggregating screens |
-| 4 | ~40 | ~20 stories | All 14 Basic items; tight finish |
-| 6 | ~60 | ~30 stories | Comfortable on Basic; ~30% Bonus possible |
-| 7 | ~70 | ~35 stories | Bonus axes realistic |
-
-Numbers assume AI tooling. Without it, halve them. These are **defaults you publish in your bundle** — not numbers you defend in a stand-up you do not attend.
-
 ## Acceptance criteria — every story carries Given/When/Then
 
 Each story you author includes **at least one Given/When/Then scenario** in its body. Two-to-five scenarios is typical for a 2h slice: happy path + 1-2 rule trips + 1-2 edges.

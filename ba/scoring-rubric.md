@@ -120,7 +120,7 @@ How does the same backlog behave for a 2-person team versus a 7-person team?
 
 | Band | Description | Pts |
 |---|---|---|
-| High | Three plans (2 / 4 / 7-person) with explicit cuts, foundation stories, parallel tracks, and aggregating screens identified for each. Cuts named at the item level (not story halves). Build-window arithmetic shown. | 8-10 |
+| High | Three plans (2 / 4 / 7-person) with explicit cuts, foundation stories, parallel tracks, and aggregating screens identified for each. Cuts named at the item level (not story halves). | 8-10 |
 | Medium | Two plans, or three with vague cuts. | 4-7 |
 | Low | One plan, or generic guidance. | 1-3 |
 | Floor | Missing. | 0 |
