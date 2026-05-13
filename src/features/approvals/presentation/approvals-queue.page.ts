@@ -11,6 +11,10 @@ import { ToastService } from '../../../shared/ui/toast.service';
 import { ApiError } from '../../../shared/http/http-error';
 import { AuthSession } from '../../auth/domain/auth-session';
 import { ABSENCE_LABEL } from '../../absences/domain/absence';
+import { SseService } from '../../../shared/realtime/sse.service';
+import { DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-approvals-queue',
@@ -129,6 +133,8 @@ export class ApprovalsQueuePage {
   private readonly api = inject(ApprovalsApi);
   private readonly session = inject(AuthSession);
   private readonly toasts = inject(ToastService);
+  private readonly sse = inject(SseService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly filter = signal<ApprovalRouting | undefined>('direct');
   protected readonly loading = signal(true);
@@ -140,8 +146,14 @@ export class ApprovalsQueuePage {
 
   constructor() {
     this.refresh();
-    // 30s polling per FE refinement §7
+    // Baseline: 30s polling per FE refinement §7.
     this.pollHandle = setInterval(() => this.refresh(true), 30_000);
+    // Bonus: SSE live-refresh. When the server emits an absence-lifecycle
+    // event, refetch silently so the new row appears within ~1s.
+    this.sse.stream().pipe(
+      filter((e) => e.kind.startsWith('absence.') || e.kind === 'approval.requested'),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(() => this.refresh(true));
   }
 
   ngOnDestroy(): void {

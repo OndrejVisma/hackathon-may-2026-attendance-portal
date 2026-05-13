@@ -37,3 +37,12 @@ bonus_declared:
   - oidc             # angular-oauth2-oidc, PKCE code flow, silent refresh,
                      # session-guard (30min idle / 12h hard) + BroadcastChannel,
                      # mock-login + OIDC button side-by-side (OIDC_CONFIG.enabled toggles)
+  - websocket-live-updates  # EventSource at /events; approvals + notifications
+                            # auto-refresh on absence.*, document.*, notification
+                            # kinds. Polling stays as graceful-degradation fallback.
+  - bulk-holiday-csv-import # admin upload + per-row diff preview (add | duplicate |
+                            # invalid) before commit; forkJoin per-row applies
+  - onboarding-tour         # 3-step popover anchored to nav links; first-login only;
+                            # dismissable forever in localStorage
+  - visual-regression       # Playwright toHaveScreenshot baselines for 5 routes × 2
+                            # themes; tolerance 1% maxDiffPixelRatio

@@ -10,6 +10,7 @@ import { ToastHostComponent } from '../../shared/ui/toast-host.component';
 import { PrivacyNoticeComponent } from './privacy-notice.component';
 import { OfflineBannerComponent } from './offline-banner.component';
 import { ShortcutsOverlayComponent } from './shortcuts-overlay.component';
+import { OnboardingTourComponent } from './onboarding-tour.component';
 import { I18nService } from '../../shared/i18n/i18n.service';
 import { TranslatePipe } from '../../shared/i18n/t.pipe';
 
@@ -19,7 +20,7 @@ import { TranslatePipe } from '../../shared/i18n/t.pipe';
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive,
     ToastHostComponent, PrivacyNoticeComponent, OfflineBannerComponent, ShortcutsOverlayComponent,
-    TranslatePipe,
+    OnboardingTourComponent, TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -55,6 +56,7 @@ import { TranslatePipe } from '../../shared/i18n/t.pipe';
     <app-toast-host />
     <app-privacy-notice />
     <app-shortcuts-overlay />
+    <app-onboarding-tour />
   `,
   styles: [`
     :host { display: block; min-height: 100vh; }

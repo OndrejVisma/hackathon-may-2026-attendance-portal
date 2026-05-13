@@ -1,9 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs/operators';
 import { NotificationsApi } from '../infrastructure/notifications-api';
 import { Notification, KIND_LABEL } from '../domain/notification';
 import { PageHeaderComponent } from '../../../shared/ui/page-header.component';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
 import { LoadingSkeletonComponent } from '../../../shared/ui/loading-skeleton.component';
+import { SseService } from '../../../shared/realtime/sse.service';
 
 @Component({
   selector: 'app-notifications-inbox',
@@ -44,10 +47,21 @@ import { LoadingSkeletonComponent } from '../../../shared/ui/loading-skeleton.co
 })
 export class NotificationsInboxPage {
   private readonly api = inject(NotificationsApi);
+  private readonly sse = inject(SseService);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly items = signal<readonly Notification[]>([]);
   protected readonly loading = signal(true);
 
   constructor() {
+    this.refresh();
+    // SSE: a fresh notification refetches the list so it's visible <1s.
+    this.sse.stream().pipe(
+      filter((e) => e.kind === 'notification' || e.kind.startsWith('absence.') || e.kind.startsWith('document.')),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(() => this.refresh());
+  }
+
+  private refresh(): void {
     this.api.list().subscribe({
       next: (res) => { this.items.set(res.items); this.loading.set(false); },
       error: () => this.loading.set(false),
