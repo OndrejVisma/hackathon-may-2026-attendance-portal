@@ -6,6 +6,16 @@ import { NotFoundPage } from './shell/not-found.page';
 
 export const routes: Routes = [
   { path: 'login', component: MockLoginPage, title: 'Sign in' },
+  {
+    path: 'auth/callback',
+    loadComponent: async () => (await import('../features/auth/presentation/oidc-callback.page')).OidcCallbackPage,
+    title: 'Signing you in',
+  },
+  {
+    path: 'logged-out',
+    loadComponent: async () => (await import('./shell/logged-out.page')).LoggedOutPage,
+    title: 'Signed out',
+  },
   { path: 'forbidden', component: ForbiddenPage, title: 'Forbidden' },
   {
     path: '',

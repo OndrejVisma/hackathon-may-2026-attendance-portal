@@ -2,6 +2,9 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthSession, fullName, hasRole } from '../../features/auth';
 import { AuthApi } from '../../features/auth/infrastructure/auth-api';
+import { OidcAuthService } from '../../features/auth/infrastructure/oidc-auth.service';
+import { OIDC_CONFIG } from '../../features/auth/infrastructure/oidc-config';
+import { SessionGuard } from '../../features/auth/domain/session-guard.service';
 import { ThemeService } from './theme.service';
 import { ToastHostComponent } from '../../shared/ui/toast-host.component';
 import { PrivacyNoticeComponent } from './privacy-notice.component';
@@ -104,9 +107,16 @@ export class LayoutComponent {
   protected toggleLocale(): void  { this.i18n.set(this.i18n.locale() === 'sk' ? 'en' : 'sk'); }
 
   protected signOut(): void {
-    this.authApi.signOut().subscribe({
-      next: () => location.assign('/login'),
-      error: () => { this.session.signOut(); location.assign('/login'); },
-    });
+    // Real OIDC path (when enabled) revokes server-side + hits end-session endpoint.
+    // Mock path just clears local tokens. Either way: broadcast to peer tabs.
+    const guard = inject(SessionGuard);
+    const oidc = inject(OidcAuthService);
+    const cfg = inject(OIDC_CONFIG);
+    const after = (): void => { guard.broadcastLogout(); location.assign('/logged-out'); };
+    if (cfg.enabled) {
+      void oidc.signOut().then(after).catch(after);
+    } else {
+      this.authApi.signOut().subscribe({ next: after, error: after });
+    }
   }
 }

@@ -34,3 +34,6 @@ bonus_declared:
   - keyboard-shortcuts  # ? opens overlay; g d|b|n|a|c|h|s chords; Esc closes
   - print-styles     # @media print: light theme, ink-friendly tables, hidden chrome
   - etag-conflict    # If-Match round-trip, 409 toast, cache invalidation
+  - oidc             # angular-oauth2-oidc, PKCE code flow, silent refresh,
+                     # session-guard (30min idle / 12h hard) + BroadcastChannel,
+                     # mock-login + OIDC button side-by-side (OIDC_CONFIG.enabled toggles)
