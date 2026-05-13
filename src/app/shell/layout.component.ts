@@ -11,6 +11,7 @@ import { PrivacyNoticeComponent } from './privacy-notice.component';
 import { OfflineBannerComponent } from './offline-banner.component';
 import { ShortcutsOverlayComponent } from './shortcuts-overlay.component';
 import { OnboardingTourComponent } from './onboarding-tour.component';
+import { DensityService } from './density.service';
 import { I18nService } from '../../shared/i18n/i18n.service';
 import { TranslatePipe } from '../../shared/i18n/t.pipe';
 
@@ -44,7 +45,7 @@ import { TranslatePipe } from '../../shared/i18n/t.pipe';
         </button>
         <button type="button" (click)="toggleTheme()" aria-label="Toggle theme">{{ themeLabel() }}</button>
         @if (user(); as u) {
-          <span class="who">{{ fullNameOf(u) }}</span>
+          <a routerLink="/profile" class="who" routerLinkActive="active">{{ fullNameOf(u) }}</a>
           <button type="button" (click)="signOut()">{{ 'common.signOut' | t }}</button>
         }
       </div>
@@ -95,6 +96,7 @@ export class LayoutComponent {
   private readonly session = inject(AuthSession);
   private readonly authApi = inject(AuthApi);
   private readonly theme = inject(ThemeService);
+  private readonly density = inject(DensityService);  // touch to boot effect
   protected readonly i18n = inject(I18nService);
 
   protected readonly user = this.session.user;

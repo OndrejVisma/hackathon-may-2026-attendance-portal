@@ -21,6 +21,19 @@ html, body {
   border-radius: var(--radius-sm);
 }
 
+// Density modes per FE refinement §1.
+// Compact mode trims spacing scale ~25% so HR/admin sees more rows per page.
+html[data-density="compact"] {
+  --space-1: 3px;
+  --space-2: 6px;
+  --space-3: 9px;
+  --space-4: 12px;
+  --space-6: 18px;
+  --space-8: 24px;
+  --space-12: 36px;
+  --space-16: 48px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

@@ -48,6 +48,11 @@ export const routes: Routes = [
         title: 'Notifications',
       },
       {
+        path: 'profile',
+        loadComponent: async () => (await import('../features/auth/presentation/profile.page')).ProfilePage,
+        title: 'Profile',
+      },
+      {
         path: 'approvals',
         canActivate: [requireRole('manager')],
         loadComponent: async () => (await import('../features/approvals/presentation/approvals-queue.page')).ApprovalsQueuePage,

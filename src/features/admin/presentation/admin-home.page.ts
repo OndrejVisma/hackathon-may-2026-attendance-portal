@@ -4,13 +4,14 @@ import { AdminUsersPage } from './users.page';
 import { AdminTeamsPage } from './teams.page';
 import { AdminHolidaysPage } from './holidays.page';
 import { YearRolloverPage } from './year-rollover.page';
+import { AdminSettingsPage } from './settings.page';
 
-type Tab = 'users' | 'teams' | 'holidays' | 'rollover';
+type Tab = 'users' | 'teams' | 'holidays' | 'rollover' | 'settings';
 
 @Component({
   selector: 'app-admin-home',
   standalone: true,
-  imports: [PageHeaderComponent, AdminUsersPage, AdminTeamsPage, AdminHolidaysPage, YearRolloverPage],
+  imports: [PageHeaderComponent, AdminUsersPage, AdminTeamsPage, AdminHolidaysPage, YearRolloverPage, AdminSettingsPage],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-page-header title="Admin" subtitle="Users, teams, holidays, year-rollover." />
@@ -19,12 +20,14 @@ type Tab = 'users' | 'teams' | 'holidays' | 'rollover';
       <button role="tab" [attr.aria-selected]="tab() === 'teams'"    (click)="set('teams')">Teams</button>
       <button role="tab" [attr.aria-selected]="tab() === 'holidays'" (click)="set('holidays')">Holidays</button>
       <button role="tab" [attr.aria-selected]="tab() === 'rollover'" (click)="set('rollover')">Year-rollover</button>
+      <button role="tab" [attr.aria-selected]="tab() === 'settings'" (click)="set('settings')">Settings</button>
     </div>
     @switch (tab()) {
       @case ('users')    { <app-admin-users /> }
       @case ('teams')    { <app-admin-teams /> }
       @case ('holidays') { <app-admin-holidays /> }
       @case ('rollover') { <app-year-rollover /> }
+      @case ('settings') { <app-admin-settings /> }
     }
   `,
   styles: [`

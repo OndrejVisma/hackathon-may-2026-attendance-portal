@@ -62,3 +62,12 @@ bonus_declared:
                                # migrations; theme service migrated v0->v1
                                # as the reference adopter; corrupted blobs
                                # are dropped silently and defaults used
+  - email-channel-fe-controls  # FE-side controls for the email-channel bonus.
+                               # /profile page: email-mirror opt-in toggle,
+                               # telemetry opt-out, density mode (FE §1),
+                               # GDPR data export + deletion request (§32),
+                               # replay onboarding tour. /admin Settings tab:
+                               # global email-channel master switch + maintenance
+                               # banner. The SMTP send itself is server-side
+                               # (asserted by @bonus @email-channel scenarios on
+                               # the BE side); the FE wires the user controls.
