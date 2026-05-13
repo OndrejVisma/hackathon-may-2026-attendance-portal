@@ -4,17 +4,16 @@ import { AuthApi } from '../infrastructure/auth-api';
 import { ApiError } from '../../../shared/http/http-error';
 import { ErrorBannerComponent } from '../../../shared/ui/error-banner.component';
 
-// Mock-login per FE refinement §8 Basic — pick a seeded user, no password.
-// The mock-server seeds these users; emails here MUST match the seed fixture.
-
+// Seeded user IDs match the hackathon mock server fixture
+// (dev-extras/integration/mock-server/src/store/seed.ts).
 const SEEDED = [
-  { email: 'anna@example.local',       label: 'Anna Novakova',     hint: 'Employee · team Platform' },
-  { email: 'peter@example.local',      label: 'Peter Kovac',       hint: 'Employee · team Platform' },
-  { email: 'leadA1@example.local',     label: 'Lead A1',           hint: 'Manager + Employee' },
-  { email: 'deptHeadA@example.local',  label: 'DeptHead A',        hint: 'Manager (skip-level)' },
-  { email: 'ceo@example.local',        label: 'CEO',               hint: 'No direct manager' },
-  { email: 'hr1@example.local',        label: 'HR One',            hint: 'HR' },
-  { email: 'admin1@example.local',     label: 'Admin One',         hint: 'Admin' },
+  { id: 'u-ic-anna',       label: 'Anna Mrkvička',     hint: 'Employee · team Platform' },
+  { id: 'u-ic-peter',      label: 'Peter Ušatý',       hint: 'Employee · team Platform' },
+  { id: 'u-lead-platform', label: 'Peter Kováč',       hint: 'Manager · team Platform' },
+  { id: 'u-head-platform', label: 'Tomáš Horváth',     hint: 'Department head (skip-level)' },
+  { id: 'u-ceo',           label: 'Eva Krajčíková',    hint: 'CEO · no direct manager' },
+  { id: 'u-hr',            label: 'Lucia Tichá',       hint: 'HR' },
+  { id: 'u-admin',         label: 'Karol Veľký',       hint: 'Admin' },
 ];
 
 @Component({
@@ -28,12 +27,12 @@ const SEEDED = [
       <p>Pick a seeded user. No password — Basic tier per spec §8.</p>
       <app-error-banner [error]="error()" />
       <ul role="list">
-        @for (u of users; track u.email) {
+        @for (u of users; track u.id) {
           <li>
-            <button type="button" [disabled]="loading() === u.email" (click)="signIn(u.email)">
+            <button type="button" [disabled]="loading() === u.id" (click)="signIn(u.id)">
               <span class="who">{{ u.label }}</span>
               <span class="hint">{{ u.hint }}</span>
-              @if (loading() === u.email) { <span class="spinner">…</span> }
+              @if (loading() === u.id) { <span class="spinner">…</span> }
             </button>
           </li>
         }
@@ -68,10 +67,10 @@ export class MockLoginPage {
   protected readonly loading = signal<string | null>(null);
   protected readonly error = signal<ApiError | null>(null);
 
-  protected signIn(email: string): void {
-    this.loading.set(email);
+  protected signIn(userId: string): void {
+    this.loading.set(userId);
     this.error.set(null);
-    this.auth.signInMock(email).subscribe({
+    this.auth.signInMock(userId).subscribe({
       next: () => { this.loading.set(null); void this.router.navigate(['/']); },
       error: (e: unknown) => {
         this.loading.set(null);

@@ -8,8 +8,8 @@ import { Absence } from '../../absences/domain/absence';
 export class ApprovalsApi {
   private readonly api = inject(ApiClient);
 
-  queue(routing?: ApprovalRouting): Observable<ApprovalQueueItem[]> {
-    return this.api.get<ApprovalQueueItem[]>('/approvals', routing ? { routing } : {});
+  queue(scope?: ApprovalRouting): Observable<ApprovalQueueItem[]> {
+    return this.api.get<ApprovalQueueItem[]>('/approvals', scope ? { scope } : {});
   }
 
   approve(absenceId: string, ifMatch?: string): Observable<Absence> {

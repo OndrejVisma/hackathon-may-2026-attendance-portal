@@ -17,7 +17,11 @@ export class ReportsApi {
   private readonly session = inject(AuthSession);
 
   calendar(params: { team_id?: string | null; date_from: string; date_to: string }): Observable<CalendarGrid> {
-    return this.api.get<CalendarGrid>('/calendar', params);
+    return this.api.get<CalendarGrid>('/calendar', {
+      ...(params.team_id ? { team_id: params.team_id } : {}),
+      from: params.date_from,
+      to: params.date_to,
+    });
   }
 
   auditLog(params?: { actor_id?: string; entity_id?: string; date_from?: string; date_to?: string; cursor?: string }): Observable<{ items: AuditEntry[]; next_cursor?: string | null }> {

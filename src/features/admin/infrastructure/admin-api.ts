@@ -42,6 +42,6 @@ export class AdminApi {
   }
 
   // Year rollover
-  previewRollover(): Observable<{ rows: YearRolloverRow[] }>             { return this.api.get('/admin/year-rollover/preview'); }
+  previewRollover(): Observable<{ rows: YearRolloverRow[] }>             { return this.api.post('/admin/year-rollover/preview'); }
   applyRollover(): Observable<{ rows: YearRolloverRow[] }>                { return this.api.post('/admin/year-rollover/apply'); }
 }
