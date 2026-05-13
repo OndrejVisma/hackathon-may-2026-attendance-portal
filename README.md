@@ -43,7 +43,7 @@ If the scoring system sees you started a Bonus axis with Basic incomplete, you f
 | [`ba/slicing-guidance.md`](ba/slicing-guidance.md) | BA | Analyst playbook — slicing, dependency, Bonus ROI, team-shape recommendations. |
 | [`ba/scoring-rubric.md`](ba/scoring-rubric.md) | BA, judges | How the BA bundle is scored (100 Basic + 30 Bonus = up to 130 pts, **individual lane** — does not contribute to team scores). |
 | [`role-quickstarts/business-analyst.md`](role-quickstarts/business-analyst.md) | BA | 5-min entry. BAs are a parallel lane, not on a team. |
-| [`role-quickstarts/solo-or-multi.md`](role-quickstarts/solo-or-multi.md) *(TBD)* | all | Vertical slice plan for 2–3 person teams. |
+| [`role-quickstarts/solo-or-multi.md`](role-quickstarts/solo-or-multi.md) | all | Vertical slice plan for 1–3 person teams. |
 
 ### Dev-extras bundle (`dev-extras/` — build teams read)
 
@@ -56,7 +56,7 @@ If the scoring system sees you started a Bonus axis with Basic incomplete, you f
 | [`dev-extras/nfr/performance.yaml`](dev-extras/nfr/performance.yaml) *(TBD)* | dev | Latency + calendar grid render targets. |
 | [`dev-extras/nfr/time-budget.yaml`](dev-extras/nfr/time-budget.yaml) *(TBD)* | dev | Build-window cap + per-phase guidance. |
 | [`dev-extras/frontend/fe-technical-refinement.md`](dev-extras/frontend/fe-technical-refinement.md) | frontend dev | FE technical refinement — 38 sections framework-agnostic (responsive, PWA, a11y WCAG 2.2 AA, theming, i18n, real-time, auth, file upload, perf budgets, design system, state, forms, security, testing, build, code architecture, DI, TZ handling, API contract, etc.) with Basic / Bonus tier mapping. |
-| [`dev-extras/role-quickstarts/`](dev-extras/role-quickstarts/) *(TBD)* | dev / QA | Per-role 5-min entry: backend dev/QA, frontend dev/QA. |
+| [`dev-extras/role-quickstarts/`](dev-extras/role-quickstarts/) | dev / QA | Per-role 5-min entry: [backend-dev](dev-extras/role-quickstarts/backend-dev.md), [backend-qa](dev-extras/role-quickstarts/backend-qa.md), [frontend-dev](dev-extras/role-quickstarts/frontend-dev.md), [frontend-qa](dev-extras/role-quickstarts/frontend-qa.md). |
 
 ## Role start map
 
@@ -66,7 +66,7 @@ Don't read everything. Pick your role, follow the quickstart.
 |---|---|---|---|
 | **Backend dev** | core + dev-extras | [`dev-extras/role-quickstarts/backend-dev.md`](dev-extras/role-quickstarts/backend-dev.md) | `dev-extras/domain/entities.md` → `acceptance/*.feature` → spec §6, §7, §9 |
 | **Backend QA / SDET** | core + dev-extras | [`dev-extras/role-quickstarts/backend-qa.md`](dev-extras/role-quickstarts/backend-qa.md) | `acceptance/*.feature` → `dev-extras/integration/fixtures/` |
-| **Frontend dev** | core + dev-extras | [`dev-extras/role-quickstarts/frontend-dev.md`](dev-extras/role-quickstarts/frontend-dev.md) *(TBD)* | `dev-extras/frontend/fe-technical-refinement.md` → spec §17 |
+| **Frontend dev** | core + dev-extras | [`dev-extras/role-quickstarts/frontend-dev.md`](dev-extras/role-quickstarts/frontend-dev.md) | `dev-extras/frontend/fe-technical-refinement.md` → spec §17 |
 | **Frontend QA** | core + dev-extras | [`dev-extras/role-quickstarts/frontend-qa.md`](dev-extras/role-quickstarts/frontend-qa.md) | `acceptance/employee.feature` + `manager.feature` |
 | **Business Analyst** *(parallel lane — not on a team)* | core only | [`role-quickstarts/business-analyst.md`](role-quickstarts/business-analyst.md) | [`ba/slicing-guidance.md`](ba/slicing-guidance.md) + [`ba/story-template.md`](ba/story-template.md) + [`ba/scoring-rubric.md`](ba/scoring-rubric.md) |
 | **Solo or 2-person team** | core + dev-extras | [`role-quickstarts/solo-or-multi.md`](role-quickstarts/solo-or-multi.md) | vertical slice plan |
