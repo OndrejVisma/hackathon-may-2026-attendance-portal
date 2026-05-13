@@ -23,6 +23,11 @@ export const routes: Routes = [
         title: 'New absence',
       },
       {
+        path: 'absences/:id',
+        loadComponent: async () => (await import('../features/absences/presentation/absence-detail.page')).AbsenceDetailPage,
+        title: 'Absence detail',
+      },
+      {
         path: 'balances',
         loadComponent: async () => (await import('../features/reports/presentation/balances.page')).BalancesPage,
         title: 'Balances',

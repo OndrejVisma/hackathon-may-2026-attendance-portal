@@ -5,30 +5,37 @@ import { AuthApi } from '../../features/auth/infrastructure/auth-api';
 import { ThemeService } from './theme.service';
 import { ToastHostComponent } from '../../shared/ui/toast-host.component';
 import { PrivacyNoticeComponent } from './privacy-notice.component';
+import { I18nService } from '../../shared/i18n/i18n.service';
+import { TranslatePipe } from '../../shared/i18n/t.pipe';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastHostComponent, PrivacyNoticeComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastHostComponent, PrivacyNoticeComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="topbar" role="banner">
       <a routerLink="/" class="brand" aria-label="Attendance portal home">Attendance</a>
       <nav class="primary" aria-label="Primary">
-        <a routerLink="/me" routerLinkActive="active">My day</a>
-        <a routerLink="/balances" routerLinkActive="active">Balances</a>
-        <a routerLink="/notifications" routerLinkActive="active">Notifications</a>
-        @if (showApprovals()) { <a routerLink="/approvals" routerLinkActive="active">Approvals</a> }
-        @if (showApprovals()) { <a routerLink="/team-calendar" routerLinkActive="active">Team calendar</a> }
-        @if (showHr()) { <a routerLink="/hr" routerLinkActive="active">HR</a> }
-        @if (showAdmin()) { <a routerLink="/admin" routerLinkActive="active">Admin</a> }
+        <a routerLink="/me"            routerLinkActive="active">{{ 'nav.myDay' | t }}</a>
+        <a routerLink="/balances"      routerLinkActive="active">{{ 'nav.balances' | t }}</a>
+        <a routerLink="/notifications" routerLinkActive="active">{{ 'nav.notifications' | t }}</a>
+        @if (showApprovals()) {
+          <a routerLink="/approvals"     routerLinkActive="active">{{ 'nav.approvals' | t }}</a>
+          <a routerLink="/team-calendar" routerLinkActive="active">{{ 'nav.teamCalendar' | t }}</a>
+        }
+        @if (showHr())    { <a routerLink="/hr"    routerLinkActive="active">{{ 'nav.hr' | t }}</a> }
+        @if (showAdmin()) { <a routerLink="/admin" routerLinkActive="active">{{ 'nav.admin' | t }}</a> }
       </nav>
       <div class="actions">
+        <button type="button" (click)="toggleLocale()" [attr.aria-label]="'Locale: ' + i18n.locale()">
+          {{ i18n.locale() === 'sk' ? 'EN' : 'SK' }}
+        </button>
         <button type="button" (click)="toggleTheme()" aria-label="Toggle theme">{{ themeLabel() }}</button>
         @if (user(); as u) {
           <span class="who">{{ fullNameOf(u) }}</span>
-          <button type="button" (click)="signOut()">Sign out</button>
+          <button type="button" (click)="signOut()">{{ 'common.signOut' | t }}</button>
         }
       </div>
     </header>
@@ -75,6 +82,7 @@ export class LayoutComponent {
   private readonly session = inject(AuthSession);
   private readonly authApi = inject(AuthApi);
   private readonly theme = inject(ThemeService);
+  protected readonly i18n = inject(I18nService);
 
   protected readonly user = this.session.user;
   protected fullNameOf = fullName;
@@ -85,6 +93,7 @@ export class LayoutComponent {
 
   protected themeLabel(): string { return this.theme.preference() === 'dark' ? 'Light' : 'Dark'; }
   protected toggleTheme(): void   { this.theme.set(this.theme.preference() === 'dark' ? 'light' : 'dark'); }
+  protected toggleLocale(): void  { this.i18n.set(this.i18n.locale() === 'sk' ? 'en' : 'sk'); }
 
   protected signOut(): void {
     this.authApi.signOut().subscribe({
