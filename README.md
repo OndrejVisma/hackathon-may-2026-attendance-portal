@@ -9,7 +9,7 @@ Welcome. This folder is the **single source of truth** for what you are building
 - **Team size:** 2–7. Senior engineers with AI tooling expected.
 - **Stack:** your choice. No starter code. Fixtures are stack-agnostic data only.
 - **AI tooling:** bring your own. A Premium Claude seat (Pro or Max) is **recommended**; any equivalent capable LLM assistant works. No organiser budget.
-- **Demo:** every team demos working software at the end of the day. Eval-runner runs after demos.
+- **Demo:** every team demos working software at the end of the day. External scoring system runs after demos against each team's `main` branch.
 
 ## Two-bundle structure
 
@@ -27,7 +27,7 @@ Two tiers. **Basic must complete first.** Bonus features are **off-limits** unti
 - **Basic** — the §13 must-have set in `product-spec.md`. The Gherkin scenarios in [`acceptance/`](acceptance/) are the rubric — they double as your TDD spec and the judge's checklist.
 - **Bonus** — §14 features. Real auth, exceptions replay, Slack/ICS, analytics, etc. Counted only when Basic ≥ 90%.
 
-If the eval-runner sees you started a Bonus axis with Basic incomplete, you forfeit Bonus points. Don't.
+If the scoring system sees you started a Bonus axis with Basic incomplete, you forfeit Bonus points. Don't.
 
 ## Navigation
 
@@ -37,7 +37,8 @@ If the eval-runner sees you started a Bonus axis with Basic incomplete, you forf
 |---|---|---|
 | [`product-spec.md`](product-spec.md) | all | Behaviour spec. Read first. |
 | [`acceptance/`](acceptance/) | all | Gherkin features = judging rubric. **Treat as TDD spec.** |
-| [`demo-format.md`](demo-format.md) *(TBD)* | all | Run order, time per team, required artifacts (`eval-meta.yaml`). |
+| [`demo-format.md`](demo-format.md) *(TBD)* | all | Run order, time per team, required artifacts. |
+| `TEAM.md` *(every team's repo root — schema below)* | all | Team manifest read by the external scoring system. **Without it, your team is skipped entirely.** |
 | [`ba/story-template.md`](ba/story-template.md) | BA | Per-story shape. |
 | [`ba/slicing-guidance.md`](ba/slicing-guidance.md) | BA | Analyst playbook — slicing, dependency, Bonus ROI, team-shape recommendations. |
 | [`ba/scoring-rubric.md`](ba/scoring-rubric.md) | BA, judges | How the BA bundle is scored (100 pts, parallel lane). |
@@ -54,7 +55,7 @@ If the eval-runner sees you started a Bonus axis with Basic incomplete, you forf
 | [`dev-extras/integration/fixtures/`](dev-extras/integration/fixtures/) *(TBD)* | dev + QA | Users, teams, holidays, quotas, in-flight absences, sample docs. |
 | [`dev-extras/nfr/performance.yaml`](dev-extras/nfr/performance.yaml) *(TBD)* | dev | Latency + calendar grid render targets. |
 | [`dev-extras/nfr/time-budget.yaml`](dev-extras/nfr/time-budget.yaml) *(TBD)* | dev | Build-window cap + per-phase guidance. |
-| [`dev-extras/frontend/fe-technical-refinement.md`](dev-extras/frontend/fe-technical-refinement.md) | frontend dev | FE technical refinement — 38 sections framework-agnostic (responsive, PWA, a11y WCAG 2.2 AA, theming, i18n, real-time, auth, file upload, perf budgets, design system, state, forms, security, testing, build/eval-runner, code architecture, DI, TZ handling, API contract, etc.) with Basic / Bonus tier mapping. |
+| [`dev-extras/frontend/fe-technical-refinement.md`](dev-extras/frontend/fe-technical-refinement.md) | frontend dev | FE technical refinement — 38 sections framework-agnostic (responsive, PWA, a11y WCAG 2.2 AA, theming, i18n, real-time, auth, file upload, perf budgets, design system, state, forms, security, testing, build, code architecture, DI, TZ handling, API contract, etc.) with Basic / Bonus tier mapping. |
 | [`dev-extras/role-quickstarts/`](dev-extras/role-quickstarts/) *(TBD)* | dev / QA | Per-role 5-min entry: backend dev/QA, frontend dev/QA. |
 
 ## Role start map
@@ -82,8 +83,8 @@ Don't read everything. Pick your role, follow the quickstart.
 4. **Mock auth is fine for Basic.** Don't burn 60 minutes on OIDC before the rule engine works.
 5. **Capable AI assistant per person (recommended).** A Premium Claude seat (Pro or Max) or equivalent makes the build window viable. With Claude specifically: Pro caps reset every 5h — reserve Opus for hard problems, Sonnet covers most workload.
 6. **In-product AI features need your own API key.** Dev-time AI assistants cover authoring; they do **not** authenticate runtime API calls from the portal.
-7. **Commit often, push often.** Eval-runner pulls your repo at demo time.
-8. **At demo time, ship `eval-meta.yaml`.** Declares stack ids, `make eval` entrypoint, high-risk paths. Without it your submission can't be eval'd → you forfeit deterministic + AI eval points.
+7. **Commit often, push often.** The scoring system pulls your `main` branch on every cycle.
+8. **`TEAM.md` at the repo root.** Required — declares team name, members (with the email used in your git commits), and stack. Without it your team is skipped by the scoring system. See *TEAM.md — team manifest* below for the schema.
 
 ## Judging rubric
 
@@ -101,15 +102,53 @@ Total **160 points**.
 
 Tiebreaker: head-to-head judge vote.
 
-## Eval-runner — what runs after demos
+## Scoring — what runs after demos
 
-Per team, ~10 minutes:
+An external scoring system pulls each team's `main` branch and scores per lane. Teams do not run anything locally for scoring — just commit, push, and ensure `TEAM.md` is present at the repo root.
 
-- **Stack-agnostic deterministic:** `gitleaks`, `trivy fs`, `jscpd`, `semgrep --config=auto` + hackathon ruleset.
-- **Your own tests + lint** via `make eval` (the entrypoint you declare in `eval-meta.yaml`).
-- **AI passes:** architecture review, deep DRY, security review of declared high-risk paths, test-quality verdict, spec-conformance against Bonus Gherkin.
+Lanes are selected per member role declared in `TEAM.md`. A team with no `FE` member is skipped in the FE lane; same for `BE` and `Testing`. The functional lane always runs.
 
-Reproducibility: fixed model + temperature 0, prompts versioned in this repo, per-team logs preserved. Disputes are resolvable by re-run.
+## TEAM.md — team manifest
+
+Every team commits a `TEAM.md` file to the **root** of their repo on `main` before the build window ends. The scoring system reads it on every cycle; without it, your team is skipped entirely.
+
+### Required schema
+
+YAML front-matter + free-form notes body:
+
+```markdown
+---
+team: <YourTeamName>            # display name, unique across the event
+members:
+  - name: <First Last>
+    email: <first.last@visma.com>   # MUST match the email used in your git commits
+    github: <github-handle>
+    role: FE                          # allowed: FE, BE, Testing, FE+BE, FE+Testing, BE+Testing, FE+BE+Testing, BA
+  # at least one member required; add as many as the team has
+stack:
+  frontend: <react | vue | svelte | angular | other>
+  backend:  <nodejs | python | java | go | dotnet | other>
+  database: <postgres | sqlite | mysql | mongo | none>   # optional
+---
+
+# <YourTeamName>
+
+<!-- Free-form notes for the scoring agents: build/run instructions, intentional scope cuts, third-party services, links. Keep it short. -->
+```
+
+### How the scorer uses this file
+
+- Read from `main` at the **root** of your repo on every cycle.
+- Commits attributed to a member when the commit author's email matches `members[].email` **exactly**. Use your real Visma email in git (`git config user.email`).
+- A team with no `FE` in any member's `role` is skipped in the FE lane; same logic for `BE` and `Testing`. Functional always runs.
+- `BA` (Business Analyst) members do not contribute to any team-lane rubric — see *Scoring — BA lane* below.
+
+### What to do at the start of the day
+
+1. Create your team repo.
+2. Copy `TEAM.md` to the repo root and fill in `team`, `members`, `stack`. Remove every `<...>` placeholder.
+3. Configure `git config user.email` per member to match `members[].email`.
+4. Commit + push to `main`.
 
 ## Out of scope
 

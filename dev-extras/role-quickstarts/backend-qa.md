@@ -85,7 +85,7 @@ Then **review and prune**. The AI will write redundant assertions and miss edge 
 - **Skipping negative paths.** The matrix demands both. A rule that only has happy-path tests scores low on the rubric.
 - **Coupling tests to the seed.** Tests should set up the state they need, not depend on the seed having a user named `alice`.
 - **Asserting on incidentals.** Don't assert on `createdAt` timestamps or auto-generated IDs unless that *is* the contract.
-- **Bonus tests before Basic ≥ 90%.** Same gate as the BE dev — eval-runner forfeits Bonus points.
+- **Bonus tests before Basic ≥ 90%.** Same gate as the BE dev — the scoring system forfeits Bonus points.
 
 ## Links
 
