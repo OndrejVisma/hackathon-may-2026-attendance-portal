@@ -1,0 +1,9 @@
+services:
+  mock:
+    build: .
+    ports:
+      - "4010:4010"
+    environment:
+      PORT: "4010"
+      LOG_LEVEL: "info"
+    restart: unless-stopped
