@@ -38,9 +38,10 @@ If the eval-runner sees you started a Bonus axis with Basic incomplete, you forf
 | [`product-spec.md`](product-spec.md) | all | Behaviour spec. Read first. |
 | [`acceptance/`](acceptance/) | all | Gherkin features = judging rubric. **Treat as TDD spec.** |
 | [`demo-format.md`](demo-format.md) *(TBD)* | all | Run order, time per team, required artifacts (`eval-meta.yaml`). |
-| [`ba/story-template.md`](ba/story-template.md) *(TBD)* | BA | Story slicing template. |
-| [`ba/slicing-guidance.md`](ba/slicing-guidance.md) *(TBD)* | BA | How to break Basic into 2h slices. |
-| [`role-quickstarts/business-analyst.md`](role-quickstarts/business-analyst.md) *(TBD)* | BA | 5-min entry for BAs. |
+| [`ba/story-template.md`](ba/story-template.md) | BA | Per-story shape. |
+| [`ba/slicing-guidance.md`](ba/slicing-guidance.md) | BA | Analyst playbook — slicing, dependency, Bonus ROI, team-shape recommendations. |
+| [`ba/scoring-rubric.md`](ba/scoring-rubric.md) | BA, judges | How the BA bundle is scored (100 pts, parallel lane). |
+| [`role-quickstarts/business-analyst.md`](role-quickstarts/business-analyst.md) | BA | 5-min entry. BAs are a parallel lane, not on a team. |
 | [`role-quickstarts/solo-or-multi.md`](role-quickstarts/solo-or-multi.md) *(TBD)* | all | Vertical slice plan for 2–3 person teams. |
 
 ### Dev-extras bundle (`dev-extras/` — build teams read)
@@ -66,8 +67,12 @@ Don't read everything. Pick your role, follow the quickstart.
 | **Backend QA / SDET** | core + dev-extras | [`dev-extras/role-quickstarts/backend-qa.md`](dev-extras/role-quickstarts/backend-qa.md) | `acceptance/*.feature` → `dev-extras/integration/fixtures/` |
 | **Frontend dev** | core + dev-extras | [`dev-extras/role-quickstarts/frontend-dev.md`](dev-extras/role-quickstarts/frontend-dev.md) *(TBD)* | `dev-extras/frontend/fe-technical-refinement.md` → spec §17 |
 | **Frontend QA** | core + dev-extras | [`dev-extras/role-quickstarts/frontend-qa.md`](dev-extras/role-quickstarts/frontend-qa.md) | `acceptance/employee.feature` + `manager.feature` |
-| **Business Analyst** | core only | [`role-quickstarts/business-analyst.md`](role-quickstarts/business-analyst.md) | `ba/story-template.md` + `ba/slicing-guidance.md` |
+| **Business Analyst** *(parallel lane — not on a team)* | core only | [`role-quickstarts/business-analyst.md`](role-quickstarts/business-analyst.md) | [`ba/slicing-guidance.md`](ba/slicing-guidance.md) + [`ba/story-template.md`](ba/story-template.md) + [`ba/scoring-rubric.md`](ba/scoring-rubric.md) |
 | **Solo or 2-person team** | core + dev-extras | [`role-quickstarts/solo-or-multi.md`](role-quickstarts/solo-or-multi.md) | vertical slice plan |
+
+## Judging principle — spec is the contract
+
+**Teams are judged on what the spec defines, not on what it leaves undefined.** Anything `product-spec.md` does not specify is the team's discretion — choose freely and judges will not penalise the choice either way. This applies to UI details not covered by §17, API shapes not pinned by the OpenAPI at the repo root, choice of stack, choice of libraries, and any ambiguity inside the acceptance Gherkin. Do not waste time hedging against undefined behaviour; do not waste time arguing it.
 
 ## Ground rules
 
@@ -91,6 +96,8 @@ Total **160 points**.
 | Security | 10 | `gitleaks`, `trivy fs`, `semgrep` + AI security pass on declared high-risk paths |
 | Code quality | 10 | Structure / DRY (`jscpd`) / complexity. AI fallback where stack tooling fragments. |
 | Polish | 10 | Judge-subjective — UX, demo flow, agent workflow shown |
+
+**BA lane — separate parallel scoring, 100 Basic + 30 Bonus (gated) = up to 130 pts.** BAs do not staff build teams. They produce an end-of-day analysis bundle judged independently under [`ba/scoring-rubric.md`](ba/scoring-rubric.md). Bonus tier mirrors the team rubric — counted only when BA Basic ≥ 90 pts. Build teams do not depend on BAs — they build from `product-spec.md`, `acceptance/`, and the OpenAPI spec at the repo root from hour 0.
 
 Tiebreaker: head-to-head judge vote.
 
