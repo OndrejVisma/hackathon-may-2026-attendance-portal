@@ -8,7 +8,7 @@ Welcome. This folder is the **single source of truth** for what you are building
 - **Time:** in-person, single day.
 - **Team size:** 2–7. Senior engineers with AI tooling expected.
 - **Stack:** your choice. No starter code. Fixtures are stack-agnostic data only.
-- **LLM access:** bring your own Premium Claude seat (Pro or Max). No organiser budget.
+- **AI tooling:** bring your own. A Premium Claude seat (Pro or Max) is **recommended**; any equivalent capable LLM assistant works. No organiser budget.
 - **Demo:** every team demos working software at the end of the day. Eval-runner runs after demos.
 
 ## Two-bundle structure
@@ -80,8 +80,8 @@ Don't read everything. Pick your role, follow the quickstart.
 2. **Acceptance Gherkin is the contract.** If a scenario passes, the feature is done. If not, it isn't.
 3. **Fixtures are canonical.** Use the data in `dev-extras/integration/fixtures/`. Don't invent your own users, holidays, or year-rollover scenarios — judges replay against the same fixtures.
 4. **Mock auth is fine for Basic.** Don't burn 60 minutes on OIDC before the rule engine works.
-5. **Premium Claude seat per person.** Pro caps reset every 5h. Reserve Opus for hard problems; Sonnet 4.6 covers most workload.
-6. **In-product AI features need your own API key.** Pro/Max seats cover Claude Code dev-time. They do **not** authenticate runtime API calls from the portal.
+5. **Capable AI assistant per person (recommended).** A Premium Claude seat (Pro or Max) or equivalent makes the build window viable. With Claude specifically: Pro caps reset every 5h — reserve Opus for hard problems, Sonnet covers most workload.
+6. **In-product AI features need your own API key.** Dev-time AI assistants cover authoring; they do **not** authenticate runtime API calls from the portal.
 7. **Commit often, push often.** Eval-runner pulls your repo at demo time.
 8. **At demo time, ship `eval-meta.yaml`.** Declares stack ids, `make eval` entrypoint, high-risk paths. Without it your submission can't be eval'd → you forfeit deterministic + AI eval points.
 
