@@ -1,34 +1,39 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthSession } from '../domain/auth-session';
-import { User } from '../domain/user';
+import { AuthApi } from '../infrastructure/auth-api';
+import { ApiError } from '../../../shared/http/http-error';
+import { ErrorBannerComponent } from '../../../shared/ui/error-banner.component';
 
 // Mock-login per FE refinement §8 Basic — pick a seeded user, no password.
-// Real OIDC is Bonus, replaces this page entirely.
+// The mock-server seeds these users; emails here MUST match the seed fixture.
 
-const SEEDED_USERS: readonly User[] = [
-  { id: 'anna',       firstName: 'Anna',     lastName: 'Novakova', roles: ['EMPLOYEE'],            teamId: 'platform', directManagerId: 'leadA1',    language: 'sk' },
-  { id: 'peter',      firstName: 'Peter',    lastName: 'Kovac',    roles: ['EMPLOYEE'],            teamId: 'platform', directManagerId: 'leadA1',    language: 'sk' },
-  { id: 'leadA1',     firstName: 'Lead',     lastName: 'A1',       roles: ['MANAGER','EMPLOYEE'],  teamId: 'platform', directManagerId: 'deptHeadA', language: 'sk' },
-  { id: 'deptHeadA',  firstName: 'DeptHead', lastName: 'A',        roles: ['MANAGER','EMPLOYEE'],  teamId: 'platform', directManagerId: 'ceo',       language: 'sk' },
-  { id: 'ceo',        firstName: 'C',        lastName: 'EO',       roles: ['MANAGER','EMPLOYEE'],  teamId: 'leadership', directManagerId: null,      language: 'sk' },
-  { id: 'hr1',        firstName: 'HR',       lastName: 'One',      roles: ['HR','EMPLOYEE'],       teamId: 'hr',       directManagerId: 'ceo',       language: 'sk' },
-  { id: 'admin1',     firstName: 'Admin',    lastName: 'One',      roles: ['ADMIN','EMPLOYEE'],    teamId: 'it',       directManagerId: 'ceo',       language: 'sk' },
+const SEEDED = [
+  { email: 'anna@example.local',       label: 'Anna Novakova',     hint: 'Employee · team Platform' },
+  { email: 'peter@example.local',      label: 'Peter Kovac',       hint: 'Employee · team Platform' },
+  { email: 'leadA1@example.local',     label: 'Lead A1',           hint: 'Manager + Employee' },
+  { email: 'deptHeadA@example.local',  label: 'DeptHead A',        hint: 'Manager (skip-level)' },
+  { email: 'ceo@example.local',        label: 'CEO',               hint: 'No direct manager' },
+  { email: 'hr1@example.local',        label: 'HR One',            hint: 'HR' },
+  { email: 'admin1@example.local',     label: 'Admin One',         hint: 'Admin' },
 ];
 
 @Component({
   selector: 'app-mock-login',
   standalone: true,
+  imports: [ErrorBannerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <main aria-labelledby="mock-login-heading">
       <h1 id="mock-login-heading">Mock login</h1>
       <p>Pick a seeded user. No password — Basic tier per spec §8.</p>
+      <app-error-banner [error]="error()" />
       <ul role="list">
-        @for (u of users; track u.id) {
+        @for (u of users; track u.email) {
           <li>
-            <button type="button" (click)="signIn(u)">
-              {{ u.firstName }} {{ u.lastName }} — {{ u.roles.join(', ') }}
+            <button type="button" [disabled]="loading() === u.email" (click)="signIn(u.email)">
+              <span class="who">{{ u.label }}</span>
+              <span class="hint">{{ u.hint }}</span>
+              @if (loading() === u.email) { <span class="spinner">…</span> }
             </button>
           </li>
         }
@@ -41,27 +46,37 @@ const SEEDED_USERS: readonly User[] = [
     p { color: var(--text-secondary); margin-bottom: var(--space-6); }
     ul { list-style: none; padding: 0; display: grid; gap: var(--space-2); }
     button {
-      width: 100%;
+      width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1);
       padding: var(--space-3) var(--space-4);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       background: var(--surface-raised);
       color: var(--text-primary);
-      text-align: left;
-      cursor: pointer;
-      font: inherit;
+      text-align: left; cursor: pointer; font: inherit;
     }
     button:hover { background: var(--surface-sunken); }
+    button:disabled { opacity: 0.5; cursor: progress; }
+    .who { font-weight: var(--font-weight-strong); }
+    .hint { color: var(--text-secondary); font-size: var(--font-size-caption); }
   `],
 })
 export class MockLoginPage {
-  private readonly session = inject(AuthSession);
+  private readonly auth = inject(AuthApi);
   private readonly router = inject(Router);
 
-  protected readonly users = signal<readonly User[]>(SEEDED_USERS).asReadonly()();
+  protected readonly users = SEEDED;
+  protected readonly loading = signal<string | null>(null);
+  protected readonly error = signal<ApiError | null>(null);
 
-  protected signIn(user: User): void {
-    this.session.signIn(user);
-    void this.router.navigate(['/']);
+  protected signIn(email: string): void {
+    this.loading.set(email);
+    this.error.set(null);
+    this.auth.signInMock(email).subscribe({
+      next: () => { this.loading.set(null); void this.router.navigate(['/']); },
+      error: (e: unknown) => {
+        this.loading.set(null);
+        this.error.set(e instanceof ApiError ? e : null);
+      },
+    });
   }
 }

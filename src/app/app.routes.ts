@@ -23,20 +23,30 @@ export const routes: Routes = [
         title: 'New absence',
       },
       {
+        path: 'balances',
+        loadComponent: async () => (await import('../features/reports/presentation/balances.page')).BalancesPage,
+        title: 'Balances',
+      },
+      {
+        path: 'notifications',
+        loadComponent: async () => (await import('../features/notifications/presentation/notifications-inbox.page')).NotificationsInboxPage,
+        title: 'Notifications',
+      },
+      {
         path: 'approvals',
-        canActivate: [requireRole('MANAGER')],
+        canActivate: [requireRole('manager')],
         loadComponent: async () => (await import('../features/approvals/presentation/approvals-queue.page')).ApprovalsQueuePage,
         title: 'Approvals',
       },
       {
         path: 'hr',
-        canActivate: [requireRole('HR')],
+        canActivate: [requireRole('hr')],
         loadComponent: async () => (await import('../features/documents/presentation/documents-queue.page')).DocumentsQueuePage,
         title: 'HR documents',
       },
       {
         path: 'admin',
-        canActivate: [requireRole('ADMIN')],
+        canActivate: [requireRole('admin')],
         loadComponent: async () => (await import('../features/admin/presentation/admin-home.page')).AdminHomePage,
         title: 'Admin',
       },
